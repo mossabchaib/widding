@@ -1,0 +1,134 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand-specific named tokens */
+  --color-emerald-deep: var(--emerald-deep);
+  --color-oxblood-rich: var(--oxblood-rich);
+  --color-gold-burnished: var(--gold-burnished);
+  --color-bone-warm: var(--bone-warm);
+  --color-midnight-ink: var(--midnight-ink);
+
+  --font-display: 'Amiri', serif;
+  --font-sans: 'Tajawal', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+:root {
+  --radius: 0.875rem;
+
+  --emerald-deep: oklch(0.32 0.06 165);
+  --oxblood-rich: oklch(0.28 0.09 25);
+  --gold-burnished: oklch(0.72 0.09 75);
+  --bone-warm: oklch(0.975 0.008 80);
+  --midnight-ink: oklch(0.18 0.04 260);
+
+  --background: var(--bone-warm);
+  --foreground: var(--midnight-ink);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--midnight-ink);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--midnight-ink);
+  --primary: var(--emerald-deep);
+  --primary-foreground: var(--bone-warm);
+  --secondary: oklch(0.95 0.01 80);
+  --secondary-foreground: var(--midnight-ink);
+  --muted: oklch(0.94 0.008 80);
+  --muted-foreground: oklch(0.5 0.02 260);
+  --accent: var(--gold-burnished);
+  --accent-foreground: var(--midnight-ink);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.01 80);
+  --input: oklch(0.9 0.01 80);
+  --ring: var(--emerald-deep);
+}
+
+.dark {
+  --background: var(--midnight-ink);
+  --foreground: var(--bone-warm);
+  --card: oklch(0.22 0.04 260);
+  --card-foreground: var(--bone-warm);
+  --popover: oklch(0.22 0.04 260);
+  --popover-foreground: var(--bone-warm);
+  --primary: var(--gold-burnished);
+  --primary-foreground: var(--midnight-ink);
+  --secondary: oklch(0.26 0.04 260);
+  --secondary-foreground: var(--bone-warm);
+  --muted: oklch(0.26 0.04 260);
+  --muted-foreground: oklch(0.7 0.02 80);
+  --accent: var(--gold-burnished);
+  --accent-foreground: var(--midnight-ink);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--gold-burnished);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    direction: rtl;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility invitation-card {
+  position: relative;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -10px rgba(15, 23, 42, 0.08);
+  transition: transform 0.45s cubic-bezier(0.2, 0, 0.2, 1),
+              box-shadow 0.45s cubic-bezier(0.2, 0, 0.2, 1),
+              border-color 0.3s ease;
+  border: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+@utility invitation-card-hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -16px rgba(6, 78, 59, 0.22),
+    0 0 0 1px color-mix(in oklab, var(--gold-burnished) 35%, transparent);
+  border-color: color-mix(in oklab, var(--gold-burnished) 30%, transparent);
+}
+.font-num {
+  font-family: var(--font-inter);
+  font-feature-settings: 'cv02', 'cv03', 'cv11', 'ss01';
+}
