@@ -74,7 +74,7 @@ async function fetchServices(wilaya: string, category: string): Promise<Service[
     .eq("providers.is_active", true);
 
   if (wilaya) q = q.eq("wilaya", wilaya);
-  if (category) q = q.eq("category", category);
+  if (category) q = q.eq("category", category as any);
 
   const { data, error } = await q.order("created_at", { ascending: false });
   if (error) throw new Error(error.message);

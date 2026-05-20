@@ -149,14 +149,25 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
         uploadFile(user.id, "receipts", commerceFile),
       ]);
 
-      const { error } = await supabase.from("subscriptions").insert({
-        provider_id: provider.id,
-        receipt_url: receiptPath,
-        commerce_doc_url: commercePath,
-        plan_days: selectedPlan.days,
-        plan_name: selectedPlan.name,
-        status: "pending",
-      });
+     type SubscriptionInsert = {
+  provider_id: string;
+  receipt_url: string;
+  commerce_doc_url: string;
+  plan_days: number;
+  plan_name: string;
+  status: "pending" | "active" | "rejected";
+};
+
+const insertData: any = {
+  provider_id: provider.id,
+  receipt_url: receiptPath,
+  commerce_doc_url: commercePath,
+  plan_days: selectedPlan.days,
+  plan_name: selectedPlan.name,
+  status: "pending",
+};
+
+const { error } = await supabase.from("subscriptions").insert(insertData);
 
       if (error) throw error;
 

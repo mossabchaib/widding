@@ -30,6 +30,15 @@ import { WILAYAS } from "@/lib/wilayas";
 // Types
 // ---------------------------------------------------------------------------
 
+type ServiceCategory =
+  | "hall"
+  | "photographer"
+  | "salon"
+  | "makeup"
+  | "dj"
+  | "pastry"
+  | "dress";
+
 interface Category {
   id: string;
   slug: string;
@@ -84,12 +93,15 @@ interface FormState {
   category: string;
   wilaya: string;
   price: string;
+  slug: string;
 }
 
-function validate({ name, category, wilaya, price }: FormState): string | null {
+function validate({ name, category, wilaya, price, slug }: FormState): string | null {
   if (!name.trim()) return "اسم الخدمة مطلوب";
   if (!category) return "اختر الفئة أولًا";
   if (!wilaya) return "اختر الولاية";
+  if (!slug.trim()) return "الـ Slug مطلوب";
+  if (!/^[a-z0-9-]+$/.test(slug.trim())) return "الـ Slug يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط";
   const parsedPrice = Number(price);
   if (price !== "" && (isNaN(parsedPrice) || parsedPrice < 0)) return "السعر غير صالح";
   return null;
@@ -106,6 +118,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
   const [price, setPrice] = useState<string>(service?.price != null ? String(service.price) : "");
   const [wilaya, setWilaya] = useState(service?.wilaya ?? "");
   const [category, setCategory] = useState("");
+  const [slug, setSlug] = useState("");
   const [photos, setPhotos] = useState<string[]>(service?.photos ?? []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -120,7 +133,18 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
     const resolved = resolveInitialCategory(service, categories);
     if (resolved) setCategory(resolved);
   }, [service, categories]); // eslint-disable-line react-hooks/exhaustive-deps
-  // `category` intentionally omitted: we only want to set it once on load.
+
+  // Auto-generate slug from name (only when slug is empty and not editing).
+  useEffect(() => {
+    if (!service && name && !slug) {
+      const generated = name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      if (generated) setSlug(generated);
+    }
+  }, [name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset form fields when the dialog opens for a new service.
   useEffect(() => {
@@ -130,6 +154,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
       setPrice("");
       setWilaya("");
       setCategory("");
+      setSlug("");
       setPhotos([]);
     }
   }, [open, service]);
@@ -154,7 +179,6 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
         }
       } finally {
         setUploading(false);
-        // Reset input so the same file can be re-selected after a failure.
         e.target.value = "";
       }
     },
@@ -166,7 +190,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
   }, []);
 
   const save = useCallback(async () => {
-    const validationError = validate({ name, category, wilaya, price });
+    const validationError = validate({ name, category, wilaya, price, slug });
     if (validationError) {
       toast.error(validationError);
       return;
@@ -183,7 +207,8 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
       description: desc.trim(),
       price: price !== "" ? Number(price) : 0,
       wilaya,
-      category: selectedCat.name_ar,
+      // ✅ إصلاح الخطأ: نستخدم slug بدل name_ar مع casting للـ union type
+      category: selectedCat.slug as ServiceCategory,
       category_id: selectedCat.id,
       photos,
       provider_id: providerId,
@@ -207,7 +232,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
     } finally {
       setSaving(false);
     }
-  }, [name, category, wilaya, price, desc, photos, providerId, service, categories, qc]);
+  }, [name, category, wilaya, price, slug, desc, photos, providerId, service, categories, qc]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -278,6 +303,24 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
                 <p className="text-xs text-destructive">يجب اختيار الفئة قبل إنشاء الخدمة</p>
               )}
             </div>
+          </div>
+          {/* ✅ حقل الـ Slug الجديد */}
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1">
+              Slug <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              value={slug}
+              onChange={(e) =>
+                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+              }
+              placeholder="مثال: my-service-name"
+              dir="ltr"
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في رابط الخدمة
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>الولاية</Label>

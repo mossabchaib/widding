@@ -301,6 +301,9 @@ export type Database = {
           created_at: string
           end_date: string | null
           id: string
+          commerce_doc_url: string | null;
+          plan_days: any;
+          plan_name: string | null;
           provider_id: string
           receipt_url: string
           start_date: string | null
