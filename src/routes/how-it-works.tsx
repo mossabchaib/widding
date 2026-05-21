@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/how-it-works")({
   component: () => (
     <div className="max-w-4xl mx-auto px-6 py-20">
-      <h1 className="font-display text-5xl mb-4">كيف يعمل متهني؟</h1>
+      <h1 className="font-display text-5xl mb-4">كيف يعمل عرسي؟</h1>
       <p className="text-muted-foreground mb-12">ثلاث خطوات بسيطة تفصلك عن تنظيم عرس استثنائي.</p>
       <div className="space-y-12">
         {[

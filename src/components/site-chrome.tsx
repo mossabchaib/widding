@@ -51,7 +51,7 @@ export function SiteHeader() {
               م
             </span>
           <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-l from-foreground to-foreground/70 bg-clip-text text-transparent font-display">
-  متهني
+  عرسي
 </span>
           </Link>
 
@@ -167,7 +167,7 @@ export function SiteFooter() {
           {/* Brand */}
           <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="font-display text-3xl font-bold text-emerald-deep tracking-tight">
-              متهني
+              عرسي
             </Link>
             <p className="text-sm leading-7 text-muted-foreground max-w-sm">
               منصتك الأولى في الجزائر لتنظيم الأعراس والمناسبات السعيدة. نجمع لك أفضل مزودي الخدمات لتنظيم ليلة العمر بكل راحة بال، عبر 58 ولاية.
@@ -249,7 +249,7 @@ export function SiteFooter() {
         {/* Bottom */}
         <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/60 pt-6">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} متهني — جميع الحقوق محفوظة.
+            © {new Date().getFullYear()} عرسي — جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-6 text-xs">
             <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">سياسة الخصوصية</Link>

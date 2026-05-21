@@ -55,7 +55,7 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "متهني — نظّم عرس الأحلام بكل راحة" },
+      { title: "عرسي — نظّم عرس الأحلام بكل راحة" },
       {
         name: "description",
         content:
@@ -128,7 +128,7 @@ function HomePage() {
             </h1>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0 mb-10">
               نجمع لك نخبة من مزودي خدمات الأفراح عبر 58 ولاية. من القاعات الفاخرة إلى أدق تفاصيل الحلويات،
-              متهني يرافقك في تنظيم يومك الموعود.
+              عرسي يرافقك في تنظيم يومك الموعود.
             </p>
 
             <div className="bg-card/95 backdrop-blur rounded-2xl p-2 ring-1 ring-foreground/10 shadow-2xl shadow-emerald-deep/10 max-w-2xl mx-auto lg:mx-0 flex flex-col md:flex-row gap-2">
@@ -262,7 +262,7 @@ function HomePage() {
         <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
           <div>
             <span className="text-xs uppercase tracking-[0.3em] text-gold-burnished font-semibold">خطوات بسيطة</span>
-            <h2 className="font-display text-3xl md:text-4xl mt-3 mb-4">كيف يعمل متهني؟</h2>
+            <h2 className="font-display text-3xl md:text-4xl mt-3 mb-4">كيف يعمل عرسي؟</h2>
             <p className="text-bone-warm/70 mb-12 max-w-md leading-relaxed">
               ثلاث خطوات بسيطة تفصلك عن تنظيم عرس استثنائي.
             </p>
@@ -308,7 +308,7 @@ function HomePage() {
               </span>
               <h2 className="font-display text-3xl md:text-4xl mb-4">هل أنت مزود خدمة محترف؟</h2>
               <p className="text-muted-foreground mb-9 max-w-[52ch] mx-auto leading-relaxed">
-                انضم إلى متهني اليوم وابدأ باستقبال طلبات الحجز من العرسان مباشرة في ولايتك.
+                انضم إلى عرسي اليوم وابدأ باستقبال طلبات الحجز من العرسان مباشرة في ولايتك.
               </p>
               <Button
                 asChild

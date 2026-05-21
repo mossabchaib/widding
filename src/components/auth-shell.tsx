@@ -36,7 +36,7 @@ export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellPro
           }}
         />
 
-        <Link to="/" className="relative z-10 font-display text-3xl tracking-tight">متهني</Link>
+        <Link to="/" className="relative z-10 font-display text-3xl tracking-tight">عرسي</Link>
 
         <div className="relative z-10 max-w-md">
           <p className="text-gold-burnished/90 text-xs uppercase tracking-[0.3em] mb-4">
@@ -46,7 +46,7 @@ export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellPro
             نظّم عرسك بطمأنينة، من قاعةٍ إلى ضحكة.
           </h2>
           <p className="text-bone-warm/75 leading-relaxed">
-            منصّة متهني تجمع لك أرقى مزوّدي خدمات الأعراس عبر 58 ولاية —
+            منصّة عرسي تجمع لك أرقى مزوّدي خدمات الأعراس عبر 58 ولاية —
             قاعات، تصوير، تجميل، حلويات و DJ.
           </p>
         </div>
@@ -69,7 +69,7 @@ export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellPro
       <section className="relative grid place-items-center px-5 py-12 sm:px-10 bg-gradient-to-br from-bone-warm via-bone-warm to-secondary">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
-            <Link to="/" className="font-display text-3xl text-emerald-deep">متهني</Link>
+            <Link to="/" className="font-display text-3xl text-emerald-deep">عرسي</Link>
           </div>
 
           <div className="text-center mb-8">
