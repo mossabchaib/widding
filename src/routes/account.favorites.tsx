@@ -226,8 +226,8 @@ function FavoritesPage() {
                   <div className="flex items-end justify-between mt-4 pt-3 border-t border-border/60">
                     <div>
                       <div className="text-[10px] text-muted-foreground uppercase tracking-wide">السعر</div>
-                      <div className="text-lg font-bold text-primary leading-tight">
-                        {formatDA(s.price)}
+                      <div className="text-lg font-bold text-gold-burnished leading-tight">
+                           {s.price==0?"متوفر عند الاتصال":formatDA(s.price)}
                       </div>
                     </div>
                     <Button

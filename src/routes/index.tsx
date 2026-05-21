@@ -367,7 +367,7 @@ function FeaturedServiceCard({
         <div className="flex justify-between items-center pt-4 border-t border-border/60">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">السعر</span>
-            <span className="font-num font-semibold text-emerald-deep text-base">{formatDA(s.price)}</span>
+            <span className="font-num font-semibold text-gold-burnished text-base"> {s.price==0?"متوفر عند الاتصال":formatDA(s.price)}</span>
           </div>
           <span className="text-sm font-medium text-oxblood-rich inline-flex items-center gap-1 group-hover:gap-2 transition-all">
             التفاصيل <ArrowLeft className="size-4" />

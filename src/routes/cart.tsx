@@ -180,8 +180,8 @@ function CartPage() {
                       )}
                     </div>
                   </div>
-                  <div className="font-num font-bold text-emerald-deep mt-2">
-                    {formatDA(item.price)}
+                  <div className="font-num font-bold text-gold-burnished mt-2">
+                     {item.price==0?"متوفر عند الاتصال":formatDA(item.price)}
                   </div>
                 </div>
 
@@ -293,7 +293,7 @@ function CartPage() {
                   <div className="text-xs text-muted-foreground">المجموع التقريبي</div>
                   <div className="text-[10px] text-muted-foreground mt-0.5">يحدد نهائيًا مع كل مزوّد</div>
                 </div>
-                <span className="font-num font-bold text-emerald-deep text-2xl tracking-tight">
+                <span className="font-num font-bold text-gold-burnished text-2xl tracking-tight">
                   {formatDA(total)}
                 </span>
               </div>

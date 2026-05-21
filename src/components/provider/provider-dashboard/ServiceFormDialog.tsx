@@ -274,7 +274,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>السعر (دج)</Label>
+              <Label>السعر (دج) يمكنك عدم وضع السعر</Label>
               <Input
                 type="number"
                 min={0}

@@ -339,7 +339,7 @@ function ServiceDetailPage() {
 
             <div className="bg-card rounded-3xl ring-1 ring-foreground/5 p-6 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.15)]">
               <div className="text-xs uppercase text-muted-foreground tracking-wider mb-1">السعر يبدأ من</div>
-              <div className="font-num text-4xl font-bold text-emerald-deep tracking-tight">{formatDA(service.price)}</div>
+<div className="font-num text-4xl font-bold text-gold-burnished tracking-tight">{service.price==0?"متوفر عند الاتصال":formatDA(service.price)}</div>
               <div className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5">
                 <Sparkles className="size-3" />
                 السعر النهائي يُحدد مع المزوّد

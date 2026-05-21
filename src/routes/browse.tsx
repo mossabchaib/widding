@@ -328,9 +328,9 @@ function BrowsePage() {
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-border/40 mt-auto">
-                        <span className="font-num font-semibold text-emerald-600 text-sm">
-                          {formatDA(s.price)}
-                        </span>
+                       <span className="font-num font-semibold text-sm" style={{color: 'oklch(0.72 0.09 75)'}}>
+  {s.price==0?"متوفر عند الاتصال":formatDA(s.price)}
+</span>
                         <span className="text-xs font-medium text-oxblood-rich inline-flex items-center gap-1">
                           التفاصيل <ArrowLeft className="size-3" />
                         </span>

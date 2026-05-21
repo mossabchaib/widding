@@ -46,7 +46,7 @@
 :root {
   --radius: 0.875rem;
 
-  --emerald-deep: oklch(0.32 0.06 165);
+  --emerald-deep: oklch(0.32 0.10 240);
   --oxblood-rich: oklch(0.28 0.09 25);
   --gold-burnished: oklch(0.72 0.09 75);
   --bone-warm: oklch(0.975 0.008 80);
