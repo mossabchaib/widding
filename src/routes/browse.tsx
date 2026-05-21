@@ -274,7 +274,11 @@ function BrowsePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filtered.map((s) => {
                 const r = ratings?.[s.id];
-                const avg = r ? (r.sum / r.n).toFixed(1) : null;
+                const avg = r
+  ? Number.isInteger(r.sum / r.n)
+    ? r.sum / r.n
+    : (r.sum / r.n).toFixed(1)
+  : null;
                 return (
                   <Link
                     key={s.id}
@@ -303,9 +307,7 @@ function BrowsePage() {
                           <span className="text-sm font-num font-bold text-foreground">
                             {avg}
                           </span>
-                          <span className="text-xs text-muted-foreground font-num">
-                            ({r.n})
-                          </span>
+                         
                         </div>
                       )}
                     </div>
@@ -326,7 +328,7 @@ function BrowsePage() {
                       </div>
 
                       <div className="flex items-center justify-between pt-3 border-t border-border/40 mt-auto">
-                        <span className="font-num font-semibold text-emerald-deep text-sm">
+                        <span className="font-num font-semibold text-emerald-600 text-sm">
                           {formatDA(s.price)}
                         </span>
                         <span className="text-xs font-medium text-oxblood-rich inline-flex items-center gap-1">
