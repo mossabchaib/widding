@@ -23,7 +23,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Edit, Plus } from "lucide-react";
+import { Edit, Plus, Upload } from "lucide-react";
 import { WILAYAS } from "@/lib/wilayas";
 
 // ---------------------------------------------------------------------------
@@ -207,7 +207,6 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
       description: desc.trim(),
       price: price !== "" ? Number(price) : 0,
       wilaya,
-      // ✅ إصلاح الخطأ: نستخدم slug بدل name_ar مع casting للـ union type
       category: selectedCat.slug as ServiceCategory,
       category_id: selectedCat.id,
       photos,
@@ -304,24 +303,7 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
               )}
             </div>
           </div>
-          {/* ✅ حقل الـ Slug الجديد */}
-          <div className="space-y-1.5">
-            <Label className="flex items-center gap-1">
-              Slug <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              value={slug}
-              onChange={(e) =>
-                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
-              }
-              placeholder="مثال: my-service-name"
-              dir="ltr"
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground">
-              أحرف إنجليزية صغيرة وأرقام وشرطات فقط — يُستخدم في رابط الخدمة
-            </p>
-          </div>
+
           <div className="space-y-1.5">
             <Label>الولاية</Label>
             <Select value={wilaya} onValueChange={setWilaya}>
@@ -347,6 +329,12 @@ export function ServiceFormDialog({ providerId, service }: ServiceFormDialogProp
               disabled={uploading}
               className="cursor-pointer"
             />
+            {/* ── مؤشر التحميل ── */}
+            {uploading && (
+              <p className="flex items-center gap-1.5 text-xs text-emerald-deep">
+                <Upload className="size-3 animate-pulse" /> جاري التحميل...
+              </p>
+            )}
             {photos.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-2">
                 {photos.map((p, i) => (

@@ -25,6 +25,9 @@ import { DeleteConfirmDialog, SearchBar, EmptyRow } from "./shared";
 
 interface ServiceProvider {
   business_name: string;
+  profiles: {
+    full_name: string;
+  } | null;
 }
 
 interface Service {
@@ -53,7 +56,12 @@ async function fetchServices(): Promise<Service[]> {
        price,
        photos,
        created_at,
-       providers ( business_name )`
+       providers (
+         business_name,
+         profiles (
+           full_name
+         )
+       )`
     )
     .order("created_at", { ascending: false });
 
@@ -77,7 +85,7 @@ function Services() {
   const { q, setQ, filtered } = useSearch<Service>(
     data,
     (s) =>
-      [s.name, s.wilaya, s.providers?.business_name]
+      [s.name, s.wilaya, s.providers?.profiles?.full_name]
         .filter(Boolean)
         .join(" ")
   );
@@ -169,7 +177,7 @@ function Services() {
                 </TableCell>
 
                 <TableCell className="py-3 px-4 text-sm text-muted-foreground">
-                  {s.providers?.business_name ?? "—"}
+                  {s.providers?.profiles?.full_name ?? "—"}
                 </TableCell>
 
                 <TableCell className="py-3 px-4">

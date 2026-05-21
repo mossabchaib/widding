@@ -77,6 +77,7 @@ async function signUpUser(
 
 /**
  * Creates the provider row in the `providers` table.
+ * Requires that a profiles row for userId already exists.
  * The `service_type` column uses a DB enum; we insert the canonical fallback
  * value "hall" here because the real category is selected per-service, not
  * per-provider. The chosen service_type from the registration form is kept in
@@ -161,6 +162,8 @@ function ClientForm() {
         wilaya: values.wilaya,
         role: "client",
       });
+
+
       toast.success("تم إنشاء الحساب بنجاح");
       navigate({ to: "/" });
     } catch (err) {
@@ -297,7 +300,7 @@ function ProviderForm() {
   );
 }
 
-// ─── Shared UI atoms (no visual changes) ──────────────────────────────────────
+// ─── Shared UI atoms ───────────────────────────────────────────────────────────
 
 function Field({
   label,

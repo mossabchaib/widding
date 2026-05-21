@@ -30,13 +30,18 @@ import { STATUS_LABEL } from "@/lib/categories";
 import { useCategories, getCategoryLabel } from "@/hooks/use-categories";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Check, X, Trash2, Eye, FileText, ShieldCheck, CreditCard } from "lucide-react";
+import { Check, X, Trash2, Eye, FileText, ShieldCheck, CreditCard, User } from "lucide-react";
 import { PageHeader, DataCard } from "@/components/dashboard-shell";
 import { useDeleteConfirm } from "@/hooks/admin/use-delete-confirm";
 import { useSearch } from "@/hooks/admin/use-search";
 import { DeleteConfirmDialog, SearchBar, EmptyRow } from "./shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+
+interface ProfileForProvider {
+  full_name: string;
+  phone: string;
+}
 
 interface ProviderForSub {
   id: string;
@@ -47,6 +52,7 @@ interface ProviderForSub {
   verified: boolean | null;
   is_active: boolean | null;
   subscription_expires_at: string | null;
+  profiles: ProfileForProvider | null;
 }
 
 interface Subscription {
@@ -57,12 +63,22 @@ interface Subscription {
   end_date: string | null;
   receipt_url: string | null;
   commerce_doc_url: string | null;
+  plan_name: string | null;
   providers: ProviderForSub | null;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const SUBS_QUERY_KEY = ["admin-subs"] as const;
+
+const PLAN_OPTIONS = [
+  { value: "all", label: "كل الباقات" },
+  { value: "أساسية", label: "أساسية" },
+  { value: "شهرية", label: "شهرية" },
+  { value: "ربع سنوية", label: "ربع سنوية" },
+  { value: "نصف سنوية", label: "نصف سنوية" },
+  { value: "سنوية", label: "سنوية" },
+] as const;
 
 // ─── Query ───────────────────────────────────────────────────────────────────
 
@@ -77,6 +93,7 @@ async function fetchSubscriptions(): Promise<Subscription[]> {
        end_date,
        receipt_url,
        commerce_doc_url,
+       plan_name,
        providers (
          id,
          business_name,
@@ -85,7 +102,11 @@ async function fetchSubscriptions(): Promise<Subscription[]> {
          commerce_register_url,
          verified,
          is_active,
-         subscription_expires_at
+         subscription_expires_at,
+         profiles (
+           full_name,
+           phone
+         )
        )`
     )
     .order("created_at", { ascending: false });
@@ -96,7 +117,6 @@ async function fetchSubscriptions(): Promise<Subscription[]> {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Resolve provider id regardless of whether Supabase returns an object or array */
 function resolveProviderId(providers: ProviderForSub | null): string | null {
   if (!providers) return null;
   return Array.isArray(providers)
@@ -121,11 +141,11 @@ function Subscriptions() {
 
   const [days, setDays] = useState<Record<string, number>>({});
   const [statusFilter, setStatusFilter] = useState("all");
+  const [planFilter, setPlanFilter] = useState("all");
   const [viewingSub, setViewingSub] = useState<Subscription | null>(null);
 
   const { state: delState, ask: askDel, close: closeDel } = useDeleteConfirm();
 
-  // ── Expire check on mount ──────────────────────────────────────────────────
   useEffect(() => {
     void checkExpiredSubscriptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,73 +164,42 @@ function Subscriptions() {
       .eq("status", "active")
       .lt("end_date", today);
 
-    if (error) {
-      console.error("Failed to fetch expired subscriptions:", error.message);
-      return;
-    }
+    if (error) { console.error("Failed to fetch expired subscriptions:", error.message); return; }
     if (!expired?.length) return;
 
-    // Run updates in parallel — one batch per record to keep atomicity
     await Promise.all(
       expired.map(async (sub) => {
         const providerId = resolveProviderId(sub.providers as ProviderForSub | null);
 
         const [subResult, provResult] = await Promise.all([
-          supabase
-            .from("subscriptions")
-            .update({ status: "rejected" })
-            .eq("id", sub.id),
+          supabase.from("subscriptions").update({ status: "rejected" }).eq("id", sub.id),
           providerId
-            ? supabase
-                .from("providers")
-                .update({ is_active: false, subscription_expires_at: null })
-                .eq("id", providerId)
+            ? supabase.from("providers").update({ is_active: false, subscription_expires_at: null }).eq("id", providerId)
             : Promise.resolve({ error: null }),
         ]);
 
-        if (subResult.error) {
-          console.error(`Failed to expire subscription ${sub.id}:`, subResult.error.message);
-        }
-        if (provResult.error) {
-          console.error(`Failed to deactivate provider ${providerId}:`, provResult.error.message);
-        }
+        if (subResult.error) console.error(`Failed to expire subscription ${sub.id}:`, subResult.error.message);
+        if (provResult.error) console.error(`Failed to deactivate provider ${providerId}:`, provResult.error.message);
       })
     );
 
     qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
   }
 
-  // ── Approve ────────────────────────────────────────────────────────────────
   async function handleApprove(s: Subscription): Promise<void> {
     const providerId = s.providers?.id;
-    if (!providerId) {
-      toast.error("لا يمكن التفعيل: المزود غير موجود");
-      return;
-    }
+    if (!providerId) { toast.error("لا يمكن التفعيل: المزود غير موجود"); return; }
 
     const durationDays = days[s.id] ?? 30;
-    if (durationDays < 1) {
-      toast.error("يجب أن تكون المدة يوماً واحداً على الأقل");
-      return;
-    }
+    if (durationDays < 1) { toast.error("يجب أن تكون المدة يوماً واحداً على الأقل"); return; }
 
     const start = new Date();
     const end = new Date();
     end.setDate(end.getDate() + durationDays);
 
     const [subResult, provResult] = await Promise.all([
-      supabase
-        .from("subscriptions")
-        .update({
-          status: "active",
-          start_date: toDateString(start),
-          end_date: toDateString(end),
-        })
-        .eq("id", s.id),
-      supabase
-        .from("providers")
-        .update({ is_active: true, subscription_expires_at: end.toISOString() })
-        .eq("id", providerId),
+      supabase.from("subscriptions").update({ status: "active", start_date: toDateString(start), end_date: toDateString(end) }).eq("id", s.id),
+      supabase.from("providers").update({ is_active: true, subscription_expires_at: end.toISOString() }).eq("id", providerId),
     ]);
 
     if (subResult.error || provResult.error) {
@@ -223,48 +212,26 @@ function Subscriptions() {
     qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
   }
 
-  // ── Reject ─────────────────────────────────────────────────────────────────
   async function handleReject(s: Subscription): Promise<void> {
-    const { error } = await supabase
-      .from("subscriptions")
-      .update({ status: "rejected" })
-      .eq("id", s.id);
-
-    if (error) {
-      toast.error("حدث خطأ أثناء الرفض");
-      return;
-    }
-
+    const { error } = await supabase.from("subscriptions").update({ status: "rejected" }).eq("id", s.id);
+    if (error) { toast.error("حدث خطأ أثناء الرفض"); return; }
     toast.success("تم الرفض");
     qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
   }
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
   function handleDelete(id: string, providerId: string | null): void {
     askDel(
       "هل أنت متأكد من حذف هذا الاشتراك نهائياً؟\n\nسيتم حذف الاشتراك وتعطيل حساب المزود بالكامل.",
       async () => {
-        const { error: subError } = await supabase
-          .from("subscriptions")
-          .delete()
-          .eq("id", id);
-
-        if (subError) {
-          toast.error("حدث خطأ أثناء عملية الحذف");
-          console.error(subError.message);
-          return;
-        }
+        const { error: subError } = await supabase.from("subscriptions").delete().eq("id", id);
+        if (subError) { toast.error("حدث خطأ أثناء عملية الحذف"); console.error(subError.message); return; }
 
         if (providerId) {
           const { error: provError } = await supabase
             .from("providers")
             .update({ is_active: false, subscription_expires_at: null })
             .eq("id", providerId);
-
-          if (provError) {
-            // Subscription deleted successfully; log provider update failure
-            console.error("Provider deactivation failed:", provError.message);
-          }
+          if (provError) console.error("Provider deactivation failed:", provError.message);
         }
 
         toast.success("تم حذف الاشتراك وتعطيل المزود بنجاح");
@@ -273,41 +240,25 @@ function Subscriptions() {
     );
   }
 
-  // ── View document ──────────────────────────────────────────────────────────
   async function viewDocument(path: string | null | undefined, bucket: string): Promise<void> {
-    if (!path) {
-      toast.error("المستند غير موجود");
-      return;
-    }
-
-    if (path.startsWith("http")) {
-      window.open(path, "_blank");
-      return;
-    }
+    if (!path) { toast.error("المستند غير موجود"); return; }
+    if (path.startsWith("http")) { window.open(path, "_blank"); return; }
 
     const newWindow = window.open("", "_blank");
-    if (!newWindow) {
-      toast.error("يرجى السماح بالنوافذ المنبثقة (Pop-ups)");
-      return;
-    }
+    if (!newWindow) { toast.error("يرجى السماح بالنوافذ المنبثقة (Pop-ups)"); return; }
 
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(path, 60);
-
-    if (error || !data?.signedUrl) {
-      newWindow.close();
-      toast.error(error?.message ?? "فشل توليد الرابط");
-      return;
-    }
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) { newWindow.close(); toast.error(error?.message ?? "فشل توليد الرابط"); return; }
 
     newWindow.location.href = data.signedUrl;
   }
 
   // ── Filter + search ────────────────────────────────────────────────────────
-  const rows = data.filter(
-    (s) => statusFilter === "all" || s.status === statusFilter
-  );
+  const rows = data.filter((s) => {
+    const matchStatus = statusFilter === "all" || s.status === statusFilter;
+    const matchPlan   = planFilter === "all" || s.plan_name === planFilter;
+    return matchStatus && matchPlan;
+  });
 
   const { q, setQ, filtered } = useSearch<Subscription>(
     rows,
@@ -319,7 +270,7 @@ function Subscriptions() {
     <>
       <PageHeader
         title="الاشتراكات"
-        description="مراجعة وصول الدفع وتفعيل المزودين"
+        description={`إجمالي: ${filtered.length}`}
         actions={
           <>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -333,6 +284,20 @@ function Subscriptions() {
                 <SelectItem value="rejected">مرفوض</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={planFilter} onValueChange={setPlanFilter}>
+              <SelectTrigger className="h-10 w-44 rounded-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PLAN_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <SearchBar value={q} onChange={setQ} placeholder="بحث باسم المزود..." />
           </>
         }
@@ -353,6 +318,9 @@ function Subscriptions() {
               </TableHead>
               <TableHead className="h-12 px-4 text-xs font-semibold uppercase tracking-wider text-right">
                 المدة
+              </TableHead>
+              <TableHead className="h-12 px-4 text-xs font-semibold uppercase tracking-wider text-right">
+                الباقة
               </TableHead>
               <TableHead className="h-12 w-[320px] px-4 text-left text-xs font-semibold uppercase tracking-wider">
                 إجراءات
@@ -390,6 +358,10 @@ function Subscriptions() {
 
                 <TableCell className="py-4 px-4 font-num text-sm">
                   {s.start_date ? `${s.start_date} → ${s.end_date}` : "—"}
+                </TableCell>
+
+                <TableCell className="py-4 px-4 font-num text-sm">
+                  {s.plan_name ?? "—"}
                 </TableCell>
 
                 <TableCell className="py-4 px-4 text-left">
@@ -475,7 +447,7 @@ function Subscriptions() {
             ))}
 
             {filtered.length === 0 && (
-              <EmptyRow colSpan={5} label="لا توجد اشتراكات" />
+              <EmptyRow colSpan={6} label="لا توجد اشتراكات" />
             )}
           </TableBody>
         </Table>
@@ -513,6 +485,27 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
+
+          {/* ── Profile Section ── */}
+          <div className="rounded-xl border border-border/60 bg-muted/40 p-4">
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-deep">
+              <User className="size-4" /> بيانات صاحب الحساب
+            </h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground">الاسم الكامل</p>
+                <p className="mt-0.5 font-medium">{p?.profiles?.full_name ?? "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">رقم الهاتف</p>
+                <p className="mt-0.5 font-medium font-num" dir="ltr">
+                  {p?.profiles?.phone ?? "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Provider Section ── */}
           <div className="rounded-xl border border-border/60 bg-muted/40 p-4">
             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-deep">
               <ShieldCheck className="size-4" /> تفاصيل المزود
@@ -525,9 +518,7 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
               <div>
                 <p className="text-xs text-muted-foreground">نوع الخدمة</p>
                 <p className="mt-0.5 font-medium">
-                  {p?.service_type
-                    ? getCategoryLabel(categories, p.service_type)
-                    : "—"}
+                  {p?.service_type ? getCategoryLabel(categories, p.service_type) : "—"}
                 </p>
               </div>
               <div>
@@ -559,6 +550,7 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
             )}
           </div>
 
+          {/* ── Subscription Section ── */}
           <div className="rounded-xl border border-border/60 bg-muted/40 p-4">
             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-deep">
               <CreditCard className="size-4" /> بيانات الاشتراك
@@ -571,6 +563,10 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
               <div>
                 <p className="text-xs text-muted-foreground">الحالة</p>
                 <p className="mt-0.5 font-medium">{STATUS_LABEL[sub.status]}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">الباقة</p>
+                <p className="mt-0.5 font-medium">{sub.plan_name ?? "—"}</p>
               </div>
               {sub.start_date && (
                 <>
@@ -589,10 +585,7 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
         </div>
 
         <DialogFooter>
-          <Button
-            onClick={onClose}
-            className="bg-midnight-ink text-bone-warm hover:bg-midnight-ink/90"
-          >
+          <Button onClick={onClose} className="bg-midnight-ink text-bone-warm hover:bg-midnight-ink/90">
             إغلاق
           </Button>
         </DialogFooter>

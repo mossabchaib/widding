@@ -214,8 +214,9 @@ function ServicesTab({ providerId }: { providerId: string }) {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{s.wilaya ?? "—"}</TableCell>
-                <TableCell className="font-semibold tabular-nums text-foreground">
-                  {formatDA(s.price)}
+                <TableCell className="font-semibold tabular-nums text-gold-burnished">
+                  {s.price==0?"متوفر عند الاتصال":formatDA(s.price)}
+                
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="rounded-full tabular-nums">

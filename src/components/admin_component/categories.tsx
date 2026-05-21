@@ -215,20 +215,43 @@ interface CategoryEditDialogProps {
 function CategoryEditDialog({ category, isNew, onClose }: CategoryEditDialogProps) {
   const qc = useQueryClient();
   const [nameAr, setNameAr] = useState("");
+  const [slug, setSlug] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Key the reset off the record's id (or the "new" sentinel) so that a
-  // parent re-render with a new object reference doesn't wipe in-flight edits.
   useEffect(() => {
     if (category) {
       setNameAr(category.name_ar ?? "");
+      setSlug(category.slug ?? "");
       setImageUrl(category.image_url ?? "");
     }
   }, [category?.id, isNew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!category) return null;
+
+  // ── Auto-generate slug from Arabic name (latin + hyphens only) ──────────────
+  const handleNameChange = (value: string) => {
+    setNameAr(value);
+    // Only auto-fill slug when creating new and user hasn't typed a slug yet
+    if (isNew && !slug) {
+      const generated = value
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w-]/g, "");
+      setSlug(generated);
+    }
+  };
+
+  // ── Sanitise slug input: lowercase, no spaces, no special chars ─────────────
+  const handleSlugChange = (value: string) => {
+    const sanitised = value
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]/g, "");
+    setSlug(sanitised);
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,8 +260,6 @@ function CategoryEditDialog({ category, isNew, onClose }: CategoryEditDialogProp
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
-      // Crypto-random filename avoids collisions without calling createBucket
-      // (the bucket must be pre-created once in the Supabase dashboard).
       const path = `${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
@@ -259,23 +280,44 @@ function CategoryEditDialog({ category, isNew, onClose }: CategoryEditDialogProp
 
   const save = async () => {
     const trimmedName = nameAr.trim();
+    const trimmedSlug = slug.trim();
+
     if (!trimmedName) {
       toast.error("يرجى تعبئة اسم الفئة");
       return;
     }
 
+    if (isNew && !trimmedSlug) {
+      toast.error("يرجى تعبئة الـ Slug");
+      return;
+    }
+
     setSaving(true);
     try {
-      const payload = { name_ar: trimmedName, image_url: imageUrl || null };
-
       if (isNew) {
-        // Use a UUID-based slug for uniqueness guarantees.
-        const slug = `cat-${crypto.randomUUID().slice(0, 8)}`;
-        const { error } = await supabase
-          .from("categories")
-          .insert([{ ...payload, slug }]);
-        if (error) throw error;
+        const payload = {
+          name_ar: trimmedName,
+          slug: trimmedSlug,
+          image_url: imageUrl || null,
+        };
+
+        const { error } = await supabase.from("categories").insert([payload]);
+        if (error) {
+          // Unique constraint violation on slug
+          if (error.code === "23505") {
+            toast.error("هذا الـ Slug مستخدم مسبقاً، يرجى اختيار اسم آخر");
+          } else {
+            throw error;
+          }
+          return;
+        }
       } else {
+        // Editing: only update name_ar and image_url — slug stays immutable
+        const payload = {
+          name_ar: trimmedName,
+          image_url: imageUrl || null,
+        };
+
         const { error } = await supabase
           .from("categories")
           .update(payload)
@@ -304,18 +346,43 @@ function CategoryEditDialog({ category, isNew, onClose }: CategoryEditDialogProp
         </DialogHeader>
 
         <div className="space-y-5">
+          {/* Name */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
               الاسم بالعربية <span className="text-destructive">*</span>
             </label>
             <Input
               value={nameAr}
-              onChange={(e) => setNameAr(e.target.value)}
+              onChange={(e) => handleNameChange(e.target.value)}
               placeholder="مثال: قاعات أفراح"
               className="h-10 rounded-lg"
             />
           </div>
 
+          {/* Slug — shown always; editable only when creating */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              Slug{isNew && <span className="text-destructive"> *</span>}
+              {!isNew && (
+                <span className="mr-1.5 text-[11px] text-muted-foreground/60">(لا يمكن تعديله بعد الإنشاء)</span>
+              )}
+            </label>
+            <Input
+              value={isNew ? slug : category.slug ?? ""}
+              onChange={(e) => handleSlugChange(e.target.value)}
+              placeholder="مثال: wedding-halls"
+              className="h-10 rounded-lg font-mono text-sm"
+              dir="ltr"
+              disabled={!isNew}
+            />
+            {isNew && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                أحرف إنجليزية صغيرة وأرقام وشرطة فقط — يُستخدم كمعرّف داخلي
+              </p>
+            )}
+          </div>
+
+          {/* Image */}
           <div>
             <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
               الصورة
