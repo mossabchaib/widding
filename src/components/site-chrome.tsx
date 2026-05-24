@@ -49,8 +49,8 @@ export function SiteHeader() {
   <Link to="/" className="group flex items-center gap-2">
     
     {/* Logo */}
-  <img
-  src="/logo.png"
+<img
+  src="https://png.pngtree.com/png-vector/20250305/ourmid/pngtree-wedding-couple-silhouette-vector-logo-in-white-background-png-image_15721885.png"
   alt="Fêteparfaite Logo"
   className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
 />
