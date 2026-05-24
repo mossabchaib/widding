@@ -50,7 +50,7 @@ export function SiteHeader() {
     
     {/* Logo */}
   <img
-  src="../public/logo.png"
+  src="../assets/logo.png"
   alt="Fêteparfaite Logo"
   className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
 />
@@ -176,7 +176,7 @@ export function SiteFooter() {
               Fêteparfaite
             </Link>
             <p className="text-sm leading-7 text-muted-foreground max-w-sm">
-              منصتك الأولى في الجزائر لتنظيم الأعراس والمناسبات السعيدة. نجمع لك أفضل مزودي الخدمات لتنظيم ليلة العمر بكل راحة بال، عبر 58 ولاية.
+              منصتك الأولى في الجزائر لتنظيم الأعراس والمناسبات السعيدة. نجمع لك أفضل مزودي الخدمات لتنظيم ليلة العمر بكل راحة بال، عبر 69 ولاية.
             </p>
            <div className="flex items-center gap-2">
   <a
