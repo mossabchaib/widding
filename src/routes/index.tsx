@@ -55,11 +55,11 @@ export const Route = createFileRoute("/")({
   component: HomePage,
   head: () => ({
     meta: [
-      { title: "عرسي — نظّم عرس الأحلام بكل راحة" },
+      { title: "Fêteparfaite — نظّم عرس الأحلام بكل راحة" },
       {
         name: "description",
         content:
-          "اكتشف أفضل قاعات الأفراح، المصورين، خبيرات التجميل، الـDJ ومحلات الفساتين عبر 58 ولاية.",
+          "اكتشف أفضل قاعات الأفراح، المصورين، خبيرات التجميل،  ومحلات الفساتين عبر 69 ولاية.",
       },
     ],
   }),
@@ -119,16 +119,16 @@ function HomePage() {
               أكبر منصة لتنظيم الأعراس في الجزائر
             </span>
             <h1 className="font-display text-5xl sm:text-6xl md:text-7xl leading-[1.05] tracking-tight text-balance text-midnight-ink mb-7 mx-auto lg:mx-0 max-w-[18ch]">
-              ليلة العمر، بتفاصيل{" "}
+             تفاصيل تُبهِر{" "}
               <span className="relative inline-block text-gold-burnished">
-                جزائرية
+               ذكريات تدوم
                 <span className="absolute -bottom-1 left-0 right-0 h-[6px] bg-gold-burnished/20 rounded-full -z-10" />
               </span>{" "}
-              أصيلة
+          Fêteparfaite, la touche parfaite
             </h1>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0 mb-10">
-              نجمع لك نخبة من مزودي خدمات الأفراح عبر 58 ولاية. من القاعات الفاخرة إلى أدق تفاصيل الحلويات،
-              عرسي يرافقك في تنظيم يومك الموعود.
+              نجمع لك نخبة من مزودي خدمات الأفراح عبر 69 ولاية. من القاعات الفاخرة إلى أدق تفاصيل الحلويات،
+              Fêteparfaite يرافقك في تنظيم يومك الموعود.
             </p>
 
             <div className="bg-card/95 backdrop-blur rounded-2xl p-2 ring-1 ring-foreground/10 shadow-2xl shadow-emerald-deep/10 max-w-2xl mx-auto lg:mx-0 flex flex-col md:flex-row gap-2">
@@ -167,7 +167,7 @@ function HomePage() {
             <div className="mt-10 flex flex-wrap justify-center lg:justify-start gap-x-8 gap-y-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-emerald-deep" /> بدون عمولات</div>
               <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-gold-burnished" /> تواصل مباشر مع المزودين</div>
-              <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-oxblood-rich" /> تغطية 58 ولاية</div>
+              <div className="flex items-center gap-2"><span className="size-1.5 rounded-full bg-oxblood-rich" /> تغطية 69 ولاية</div>
             </div>
           </div>
 
@@ -177,7 +177,7 @@ function HomePage() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
               <div className="absolute top-6 right-6 size-2 rounded-full bg-gold-burnished animate-pulse" />
               <div className="relative text-center text-bone-warm px-8">
-                <div className="text-[8rem] md:text-[10rem] font-display leading-none mb-2 bg-gradient-to-b from-bone-warm to-gold-burnished bg-clip-text text-transparent">58</div>
+                <div className="text-[8rem] md:text-[10rem] font-display leading-none mb-2 bg-gradient-to-b from-bone-warm to-gold-burnished bg-clip-text text-transparent">69</div>
                 <div className="font-display text-2xl tracking-wide">ولاية</div>
                 <div className="mt-3 h-px w-12 bg-gold-burnished/50 mx-auto" />
                 <div className="text-sm mt-3 opacity-80">تغطية كاملة للجزائر</div>
@@ -262,7 +262,7 @@ function HomePage() {
         <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-20 items-center">
           <div>
             <span className="text-xs uppercase tracking-[0.3em] text-gold-burnished font-semibold">خطوات بسيطة</span>
-            <h2 className="font-display text-3xl md:text-4xl mt-3 mb-4">كيف يعمل عرسي؟</h2>
+            <h2 className="font-display text-3xl md:text-4xl mt-3 mb-4">كيف يعمل Fêteparfaite؟</h2>
             <p className="text-bone-warm/70 mb-12 max-w-md leading-relaxed">
               ثلاث خطوات بسيطة تفصلك عن تنظيم عرس استثنائي.
             </p>
@@ -287,7 +287,7 @@ function HomePage() {
             <div className="relative size-72 md:size-96 bg-gradient-to-br from-bone-warm/10 to-bone-warm/5 backdrop-blur rounded-full grid place-items-center text-center px-12 ring-1 ring-bone-warm/15 shadow-2xl">
               <div>
                 <Star className="size-10 mx-auto mb-5 text-gold-burnished fill-gold-burnished/30" />
-                <p className="font-display text-xl md:text-2xl leading-relaxed">«ليلة لا تُنسى تبدأ بتنظيم متقن»</p>
+                <p className="font-display text-xl md:text-2xl leading-relaxed">«لأن للجمال تفاصيل لا تُنسى»</p>
                 <div className="mt-6 h-px w-12 bg-gold-burnished/50 mx-auto" />
               </div>
             </div>
@@ -308,7 +308,7 @@ function HomePage() {
               </span>
               <h2 className="font-display text-3xl md:text-4xl mb-4">هل أنت مزود خدمة محترف؟</h2>
               <p className="text-muted-foreground mb-9 max-w-[52ch] mx-auto leading-relaxed">
-                انضم إلى عرسي اليوم وابدأ باستقبال طلبات الحجز من العرسان مباشرة في ولايتك.
+                انضم إلى Fêteparfaite اليوم وابدأ باستقبال طلبات الحجز من العرسان مباشرة في ولايتك.
               </p>
               <Button
                 asChild

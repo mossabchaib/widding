@@ -10,10 +10,8 @@ import {
 } from "recharts";
 import {
   TrendingUp, Star, DollarSign, Briefcase, CreditCard, Calendar,
-  AlertCircle, Inbox,
+  AlertCircle, Inbox, Eye,
 } from "lucide-react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Service {
   id: string;
@@ -42,6 +40,7 @@ interface Subscription {
 interface Provider {
   subscription_expires_at: string | null;
   is_active: boolean;
+  views?: number;
 }
 
 interface ProviderData {
@@ -56,29 +55,15 @@ interface OverviewProps {
   provider: Provider;
 }
 
-// ─── Constants (defined outside component to avoid recreation on every render) ─
-
 const MONTH_NAMES = ["جان", "فيف", "مار", "أفر", "ماي", "جوان", "جويل", "أوت", "سب", "أكت", "نوف", "ديس"] as const;
 const COLORS = ["hsl(160 60% 35%)", "hsl(42 65% 52%)", "hsl(0 55% 38%)", "hsl(220 35% 18%)"] as const;
 const STATUS_KEYS = ["new", "accepted", "rejected"] as const;
 
-// ─── Query function (extracted for clarity & testability) ─────────────────────
-
 async function fetchProviderOverview(providerId: string): Promise<ProviderData> {
   const [servicesRes, requestsRes, subsRes] = await Promise.all([
-    supabase
-      .from("services")
-      .select("id, provider_id, category, price")
-      .eq("provider_id", providerId),
-    supabase
-      .from("requests")
-      .select("id, status, created_at, services(price)")
-      .eq("provider_id", providerId),
-    supabase
-      .from("subscriptions")
-      .select("id, created_at")
-      .eq("provider_id", providerId)
-      .order("created_at", { ascending: false }),
+    supabase.from("services").select("id, provider_id, category, price").eq("provider_id", providerId),
+    supabase.from("requests").select("id, status, created_at, services(price)").eq("provider_id", providerId),
+    supabase.from("subscriptions").select("id, created_at").eq("provider_id", providerId).order("created_at", { ascending: false }),
   ]);
 
   if (servicesRes.error) throw new Error(servicesRes.error.message);
@@ -90,10 +75,7 @@ async function fetchProviderOverview(providerId: string): Promise<ProviderData> 
 
   let reviews: Review[] = [];
   if (serviceIds.length > 0) {
-    const reviewsRes = await supabase
-      .from("reviews")
-      .select("rating, service_id")
-      .in("service_id", serviceIds);
+    const reviewsRes = await supabase.from("reviews").select("rating, service_id").in("service_id", serviceIds);
     if (reviewsRes.error) throw new Error(reviewsRes.error.message);
     reviews = reviewsRes.data ?? [];
   }
@@ -106,18 +88,14 @@ async function fetchProviderOverview(providerId: string): Promise<ProviderData> 
   };
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export function Overview({ providerId, provider }: OverviewProps) {
   const { data, isLoading, isError, error } = useQuery<ProviderData, Error>({
     queryKey: ["provider-overview", providerId],
     queryFn: () => fetchProviderOverview(providerId),
-    staleTime: 60_000, // 1 minute — avoid unnecessary refetches
+    staleTime: 60_000,
   });
 
   const { data: categories } = useCategories();
-
-  // ── Derived / computed values (memoized) ──────────────────────────────────
 
   const services = data?.services ?? [];
   const requests = data?.requests ?? [];
@@ -130,10 +108,7 @@ export function Overview({ providerId, provider }: OverviewProps) {
   }, [reviews]);
 
   const revenue = useMemo(
-    () =>
-      requests
-        .filter((r) => r.status === "accepted")
-        .reduce((acc, r) => acc + Number(r.services?.price ?? 0), 0),
+    () => requests.filter((r) => r.status === "accepted").reduce((acc, r) => acc + Number(r.services?.price ?? 0), 0),
     [requests],
   );
 
@@ -141,66 +116,46 @@ export function Overview({ providerId, provider }: OverviewProps) {
     const buckets = Array.from({ length: 6 }, (_, i) => {
       const d = new Date();
       d.setMonth(d.getMonth() - (5 - i));
-      return {
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        name: MONTH_NAMES[d.getMonth()],
-        الطلبات: 0,
-      };
+      return { key: `${d.getFullYear()}-${d.getMonth()}`, name: MONTH_NAMES[d.getMonth()], الطلبات: 0 };
     });
-
     for (const r of requests) {
       const d = new Date(r.created_at);
       const bucket = buckets.find((m) => m.key === `${d.getFullYear()}-${d.getMonth()}`);
       if (bucket) bucket.الطلبات += 1;
     }
-
     return buckets;
   }, [requests]);
 
-  // Single-pass status counting instead of three separate .filter() calls
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { new: 0, accepted: 0, rejected: 0 };
-    for (const r of requests) {
-      if (r.status in counts) counts[r.status] += 1;
-    }
+    for (const r of requests) { if (r.status in counts) counts[r.status] += 1; }
     return counts;
   }, [requests]);
 
   const statusChart = useMemo(
-    () =>
-      STATUS_KEYS.map((k) => ({
-        name: STATUS_LABEL[k as keyof typeof STATUS_LABEL],
-        value: statusCounts[k],
-      })),
+    () => STATUS_KEYS.map((k) => ({ name: STATUS_LABEL[k as keyof typeof STATUS_LABEL], value: statusCounts[k] })),
     [statusCounts],
   );
 
   const categoryChart = useMemo(
-    () =>
-      (categories ?? [])
-        .map((c) => ({
-          name: c.name_ar,
-          value: services.filter((s) => s.category === c.slug).length,
-        }))
-        .filter((x) => x.value > 0),
+    () => (categories ?? []).map((c) => ({ name: c.name_ar, value: services.filter((s) => s.category === c.slug).length })).filter((x) => x.value > 0),
     [categories, services],
   );
 
-  const totalStatus = useMemo(
-    () => statusChart.reduce((acc, x) => acc + x.value, 0),
-    [statusChart],
-  );
-
-  // ── Loading / error guards ────────────────────────────────────────────────
+  const totalStatus = useMemo(() => statusChart.reduce((acc, x) => acc + x.value, 0), [statusChart]);
 
   if (isLoading) {
     return (
-      <div dir="rtl" className="space-y-8">
-        <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
+      <div dir="rtl" className="space-y-6 p-6">
+        <div className="h-10 w-56 animate-pulse rounded-xl bg-muted" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-muted" />
           ))}
+        </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="h-80 animate-pulse rounded-2xl bg-muted lg:col-span-2" />
+          <div className="h-80 animate-pulse rounded-2xl bg-muted" />
         </div>
       </div>
     );
@@ -208,195 +163,289 @@ export function Overview({ providerId, provider }: OverviewProps) {
 
   if (isError) {
     return (
-      <div dir="rtl" className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-700">
-        <AlertCircle className="h-5 w-5 shrink-0" />
-        <p className="text-sm">{error?.message ?? "حدث خطأ أثناء تحميل البيانات"}</p>
+      <div dir="rtl" className="m-6 flex items-center gap-4 rounded-2xl border border-rose-200/60 bg-rose-50/80 p-6 text-rose-700 backdrop-blur">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-100">
+          <AlertCircle className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="font-semibold text-rose-800">خطأ في التحميل</p>
+          <p className="text-sm text-rose-600">{error?.message ?? "حدث خطأ أثناء تحميل البيانات"}</p>
+        </div>
       </div>
     );
   }
 
-  // ── Card definitions ──────────────────────────────────────────────────────
-
-  const cards = [
-    { l: "الخدمات", v: services.length, icon: Briefcase, accent: "from-emerald-500/15 to-emerald-500/0", text: "text-emerald-700", ring: "ring-emerald-500/20" },
-    { l: "الطلبات", v: requests.length, icon: Inbox, accent: "from-slate-500/15 to-slate-500/0", text: "text-slate-800", ring: "ring-slate-500/20" },
-    { l: "متوسط التقييم", v: avg ? avg.toFixed(1) : "—", icon: Star, accent: "from-amber-500/15 to-amber-500/0", text: "text-amber-700", ring: "ring-amber-500/20" },
-    { l: "مداخيل مقبولة", v: formatDA(revenue), icon: DollarSign, accent: "from-rose-500/15 to-rose-500/0", text: "text-rose-700", ring: "ring-rose-500/20" },
+  const kpis = [
+    {
+      label: "الخدمات",
+      value: services.length,
+      icon: Briefcase,
+      color: "emerald",
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      border: "border-emerald-100",
+      dot: "bg-emerald-500",
+    },
+    {
+      label: "الطلبات",
+      value: requests.length,
+      icon: Inbox,
+      color: "violet",
+      bg: "bg-violet-50",
+      text: "text-violet-600",
+      border: "border-violet-100",
+      dot: "bg-violet-500",
+    },
+    {
+      label: "متوسط التقييم",
+      value: avg ? avg.toFixed(1) : "—",
+      icon: Star,
+      color: "amber",
+      bg: "bg-amber-50",
+      text: "text-amber-600",
+      border: "border-amber-100",
+      dot: "bg-amber-500",
+    },
+    {
+      label: "المداخيل",
+      value: formatDA(revenue),
+      icon: DollarSign,
+      color: "sky",
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      border: "border-sky-100",
+      dot: "bg-sky-500",
+    },
+    {
+      label: "المشاهدات",
+      value: provider.views ?? 0,
+      icon: Eye,
+      color: "rose",
+      bg: "bg-rose-50",
+      text: "text-rose-600",
+      border: "border-rose-100",
+      dot: "bg-rose-500",
+    },
   ] as const;
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    <div dir="rtl" className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            نظرة عامة
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            ملخّص أداء نشاطك خلال الفترة الأخيرة
-          </p>
+    <div dir="rtl" className="min-h-screen space-y-8 p-4 sm:p-6 lg:p-8">
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-1 rounded-full bg-gradient-to-b from-emerald-500 to-emerald-300" />
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">لوحة التحكم</h1>
+          </div>
+          <p className="pr-3.5 text-sm text-muted-foreground">ملخّص شامل لأداء نشاطك التجاري</p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur">
-          <TrendingUp className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2 self-start rounded-2xl border border-border bg-card px-4 py-2.5 text-xs font-medium text-muted-foreground shadow-sm sm:self-auto">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
           محدّث الآن
+          <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c) => {
-          const Icon = c.icon;
+      {/* ── KPI Grid ── */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        {kpis.map((k) => {
+          const Icon = k.icon;
           return (
             <div
-              key={c.l}
-              className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm ring-1 ${c.ring} transition hover:-translate-y-0.5 hover:shadow-md`}
+              key={k.label}
+              className={`group relative overflow-hidden rounded-2xl border ${k.border} ${k.bg} p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:p-5`}
             >
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-bl ${c.accent}`} />
-              <div className="relative flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {c.l}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold tabular-nums text-foreground">
-                    {c.v}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-muted-foreground">{k.label}</p>
+                  <p className={`mt-2.5 text-2xl font-bold tabular-nums tracking-tight ${k.text}`}>
+                    {k.value}
                   </p>
                 </div>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl bg-background/70 backdrop-blur ${c.text}`}>
-                  <Icon className="h-5 w-5" />
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-sm ${k.text}`}>
+                  <Icon className="h-4.5 w-4.5" strokeWidth={2} />
                 </div>
               </div>
+              <div className={`absolute bottom-0 left-0 h-0.5 w-full ${k.dot} opacity-60`} />
             </div>
           );
         })}
       </div>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-        {/* Requests trend */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
-          <div className="mb-4 flex items-start justify-between">
-            <div>
-              <h3 className="text-base font-semibold text-foreground">حركة الطلبات</h3>
+      {/* ── Charts Row ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+
+        {/* Trend Chart */}
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-semibold text-foreground">حركة الطلبات</h3>
               <p className="text-xs text-muted-foreground">آخر 6 أشهر</p>
             </div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700">
-              <TrendingUp className="h-3 w-3" />
-              {requests.length}
+            <div className="flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              <TrendingUp className="h-3.5 w-3.5" />
+              {requests.length} طلب
             </div>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={monthly} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="reqFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={COLORS[0]} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={COLORS[0]} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="hsl(var(--border, 220 13% 91%))" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(215 16% 47%)" }} />
-                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(215 16% 47%)" }} width={28} />
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(220 13% 91%)", fontSize: 12 }} />
-                <Area type="monotone" dataKey="الطلبات" stroke={COLORS[0]} strokeWidth={2.5} fill="url(#reqFill)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="p-5">
+            <div className="h-60">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthly} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="reqFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS[0]} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={COLORS[0]} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="hsl(var(--border, 220 13% 91%))" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(215 16% 57%)" }} dy={6} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(215 16% 57%)" }} width={24} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 14, border: "1px solid hsl(220 13% 91%)", fontSize: 12, boxShadow: "0 4px 24px rgba(0,0,0,.06)" }}
+                    cursor={{ stroke: COLORS[0], strokeWidth: 1, strokeDasharray: "4 4" }}
+                  />
+                  <Area type="monotone" dataKey="الطلبات" stroke={COLORS[0]} strokeWidth={2.5} fill="url(#reqFill)" dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: COLORS[0] }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Status distribution */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-foreground">حالة الطلبات</h3>
-            <p className="text-xs text-muted-foreground">توزيع الحالات</p>
+        {/* Status Donut */}
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="border-b border-border/60 px-5 py-4">
+            <h3 className="text-sm font-semibold text-foreground">توزيع حالات الطلبات</h3>
+            <p className="text-xs text-muted-foreground">نسبة كل حالة من الإجمالي</p>
           </div>
-          <div className="relative h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={statusChart} dataKey="value" nameKey="name" innerRadius={48} outerRadius={70} paddingAngle={3} stroke="none">
-                  {statusChart.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(220 13% 91%)", fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold tabular-nums text-foreground">{totalStatus}</span>
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">إجمالي</span>
+          <div className="px-5 pt-4">
+            <div className="relative h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={statusChart} dataKey="value" nameKey="name" innerRadius={52} outerRadius={72} paddingAngle={4} stroke="none" startAngle={90} endAngle={-270}>
+                    {statusChart.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(220 13% 91%)", fontSize: 12, boxShadow: "0 4px 24px rgba(0,0,0,.06)" }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-bold tabular-nums text-foreground">{totalStatus}</span>
+                <span className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">إجمالي</span>
+              </div>
             </div>
           </div>
-          <div className="mt-4 space-y-2">
+          <div className="space-y-1 p-5 pt-3">
             {statusChart.map((s, i) => (
-              <div key={s.name} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-muted/60">
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                  <span className="text-foreground">{s.name}</span>
+              <div key={s.name} className="flex items-center justify-between rounded-xl px-3 py-2 transition hover:bg-muted/50">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                  <span className="text-sm text-foreground">{s.name}</span>
                 </div>
-                <span className="font-semibold tabular-nums text-muted-foreground">{s.value}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold tabular-nums text-foreground">{s.value}</span>
+                  {totalStatus > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {Math.round((s.value / totalStatus) * 100)}٪
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Category chart */}
+      {/* ── Category Bar Chart ── */}
       {categoryChart.length > 0 && (
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-base font-semibold text-foreground">الخدمات حسب الفئة</h3>
-            <p className="text-xs text-muted-foreground">توزيع خدماتك على الفئات</p>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-semibold text-foreground">الخدمات حسب الفئة</h3>
+              <p className="text-xs text-muted-foreground">توزيع خدماتك على التصنيفات المختلفة</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+              {services.length} خدمة
+            </div>
           </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryChart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={COLORS[1]} stopOpacity={0.95} />
-                    <stop offset="100%" stopColor={COLORS[1]} stopOpacity={0.55} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="hsl(220 13% 91%)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(215 16% 47%)" }} />
-                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(215 16% 47%)" }} width={28} />
-                <Tooltip cursor={{ fill: "hsl(220 13% 95%)" }} contentStyle={{ borderRadius: 12, border: "1px solid hsl(220 13% 91%)", fontSize: 12 }} />
-                <Bar dataKey="value" fill="url(#barFill)" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="p-5">
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={categoryChart} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={COLORS[1]} stopOpacity={0.9} />
+                      <stop offset="100%" stopColor={COLORS[1]} stopOpacity={0.4} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 6" stroke="hsl(220 13% 91%)" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(215 16% 57%)" }} dy={6} />
+                  <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(215 16% 57%)" }} width={24} />
+                  <Tooltip cursor={{ fill: "hsl(220 13% 96%)", radius: 8 }} contentStyle={{ borderRadius: 14, border: "1px solid hsl(220 13% 91%)", fontSize: 12, boxShadow: "0 4px 24px rgba(0,0,0,.06)" }} />
+                  <Bar dataKey="value" fill="url(#barFill)" radius={[10, 10, 0, 0]} maxBarSize={56} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Subscription banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-l from-slate-900 to-slate-800 p-5 text-white shadow-sm">
-        <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-amber-400/20 blur-3xl" />
-        <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* ── Subscription Banner ── */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 shadow-xl">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(160_60%_35%/0.15),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,hsl(42_65%_52%/0.10),transparent_60%)]" />
+
+        <div className="relative grid gap-6 p-6 sm:grid-cols-2 sm:items-center sm:gap-8">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-white backdrop-blur-sm ring-1 ring-white/10">
               <CreditCard className="h-6 w-6" />
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-white/60">حالة الاشتراك</p>
-              <p className="mt-1 flex items-center gap-2 text-sm text-white/90">
-                <Calendar className="h-4 w-4" />
-                ينتهي: {provider.subscription_expires_at ? formatDate(provider.subscription_expires_at) : "—"}
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/40">حالة الاشتراك</p>
+              <p className="text-base font-semibold text-white">
+                {provider.is_active ? "اشتراك نشط" : "الاشتراك منتهي"}
               </p>
+              <div className="flex items-center gap-1.5 text-xs text-white/50">
+                <Calendar className="h-3.5 w-3.5" />
+                <span>تاريخ الانتهاء: {provider.subscription_expires_at ? formatDate(provider.subscription_expires_at) : "—"}</span>
+              </div>
             </div>
           </div>
-          <div
-            className={`inline-flex items-center gap-2 self-start rounded-full px-4 py-2 text-sm font-semibold backdrop-blur sm:self-auto ${
-              provider.is_active
-                ? "bg-emerald-400/20 text-emerald-200 ring-1 ring-emerald-300/30"
-                : "bg-rose-400/20 text-rose-200 ring-1 ring-rose-300/30"
-            }`}
-          >
-            {provider.is_active ? <Star className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            {provider.is_active ? "مفعّل" : "غير مفعّل"}
+
+          <div className="flex items-center justify-between gap-4 sm:justify-end">
+            <div className="flex flex-col items-end gap-1 text-right">
+              <span className="text-xs text-white/40">الحالة الحالية</span>
+              <div
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ring-1 ${
+                  provider.is_active
+                    ? "bg-emerald-400/15 text-emerald-300 ring-emerald-400/30"
+                    : "bg-rose-400/15 text-rose-300 ring-rose-400/30"
+                }`}
+              >
+                {provider.is_active ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                    </span>
+                    مفعّل
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-4 w-4" />
+                    غير مفعّل
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
     </div>
   );
 }

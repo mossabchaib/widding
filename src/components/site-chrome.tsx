@@ -45,22 +45,28 @@ export function SiteHeader() {
     <header dir="rtl" className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Brand + Nav */}
-        <div className="flex items-center gap-8">
-          <Link to="/" className="group flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold shadow-sm shadow-primary/20 group-hover:scale-105 transition-transform">
-              م
-            </span>
-          <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-l from-foreground to-foreground/70 bg-clip-text text-transparent font-display">
-  عرسي
-</span>
-          </Link>
+   <div className="flex items-center gap-8">
+  <Link to="/" className="group flex items-center gap-2">
+    
+    {/* Logo */}
+  <img
+  src="../public/logo.png"
+  alt="Fêteparfaite Logo"
+  className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
+/>
 
-          <nav className="hidden lg:flex items-center gap-1">
-            <NavLink to="/browse" label="تصفح الخدمات" />
-            <NavLink to="/how-it-works" label="كيف يعمل" />
-            <NavLink to="/for-providers" label="للمزودين" />
-          </nav>
-        </div>
+    <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-l from-foreground to-foreground/70 bg-clip-text text-transparent font-display">
+      Fêteparfaite
+    </span>
+    
+  </Link>
+
+  <nav className="hidden lg:flex items-center gap-1">
+    <NavLink to="/browse" label="تصفح الخدمات" />
+    <NavLink to="/how-it-works" label="كيف يعمل" />
+    <NavLink to="/for-providers" label="للمزودين" />
+  </nav>
+</div>
 
         {/* Right cluster */}
         <div className="flex items-center gap-2">
@@ -167,7 +173,7 @@ export function SiteFooter() {
           {/* Brand */}
           <div className="lg:col-span-4 space-y-5">
             <Link to="/" className="font-display text-3xl font-bold text-emerald-deep tracking-tight">
-              عرسي
+              Fêteparfaite
             </Link>
             <p className="text-sm leading-7 text-muted-foreground max-w-sm">
               منصتك الأولى في الجزائر لتنظيم الأعراس والمناسبات السعيدة. نجمع لك أفضل مزودي الخدمات لتنظيم ليلة العمر بكل راحة بال، عبر 58 ولاية.
@@ -249,7 +255,7 @@ export function SiteFooter() {
         {/* Bottom */}
         <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border/60 pt-6">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} عرسي — جميع الحقوق محفوظة.
+            © {new Date().getFullYear()} Fêteparfaite — جميع الحقوق محفوظة.
           </p>
           <div className="flex items-center gap-6 text-xs">
             <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">سياسة الخصوصية</Link>

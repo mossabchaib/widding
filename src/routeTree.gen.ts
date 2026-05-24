@@ -17,6 +17,7 @@ import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesServiceIdRouteImport } from './routes/services.$serviceId'
+import { Route as ProfileProfileIdRouteImport } from './routes/profile.$profileId'
 import { Route as AuthRegisterRouteImport } from './routes/auth.register'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AccountRequestsRouteImport } from './routes/account.requests'
@@ -62,6 +63,11 @@ const ServicesServiceIdRoute = ServicesServiceIdRouteImport.update({
   path: '/services/$serviceId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileProfileIdRoute = ProfileProfileIdRouteImport.update({
+  id: '/profile/$profileId',
+  path: '/profile/$profileId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/profile/$profileId': typeof ProfileProfileIdRoute
   '/services/$serviceId': typeof ServicesServiceIdRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/profile/$profileId': typeof ProfileProfileIdRoute
   '/services/$serviceId': typeof ServicesServiceIdRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
+  '/profile/$profileId': typeof ProfileProfileIdRoute
   '/services/$serviceId': typeof ServicesServiceIdRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/account/requests'
     | '/auth/login'
     | '/auth/register'
+    | '/profile/$profileId'
     | '/services/$serviceId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/account/requests'
     | '/auth/login'
     | '/auth/register'
+    | '/profile/$profileId'
     | '/services/$serviceId'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/account/requests'
     | '/auth/login'
     | '/auth/register'
+    | '/profile/$profileId'
     | '/services/$serviceId'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   AccountRequestsRoute: typeof AccountRequestsRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
+  ProfileProfileIdRoute: typeof ProfileProfileIdRoute
   ServicesServiceIdRoute: typeof ServicesServiceIdRoute
 }
 
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesServiceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$profileId': {
+      id: '/profile/$profileId'
+      path: '/profile/$profileId'
+      fullPath: '/profile/$profileId'
+      preLoaderRoute: typeof ProfileProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/register': {
       id: '/auth/register'
       path: '/auth/register'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRequestsRoute: AccountRequestsRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+  ProfileProfileIdRoute: ProfileProfileIdRoute,
   ServicesServiceIdRoute: ServicesServiceIdRoute,
 }
 export const routeTree = rootRouteImport

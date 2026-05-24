@@ -356,7 +356,32 @@ function ServiceDetailPage() {
               </Button>
             </div>
 
-            {/* Provider card */}
+         {/* Provider card */}
+         <Link
+  to="/profile/$profileId"
+  params={{ profileId: service.providers.id }}
+  className="block bg-card rounded-3xl ring-1 ring-foreground/5 p-5 hover:ring-emerald-deep/30 hover:-translate-y-0.5 transition-all shadow-sm group"
+>
+  <div className="flex items-center gap-3">
+    <div className="size-12 rounded-2xl bg-gradient-to-br from-emerald-deep/15 to-gold-burnished/15 text-emerald-deep grid place-items-center text-lg font-bold shrink-0">
+      {service.providers.business_name.charAt(0)}
+    </div>
+    <div className="min-w-0 flex-1">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">
+        مزوّد الخدمة
+      </div>
+      <div className="font-semibold text-sm truncate">
+        {service.providers.business_name}
+      </div>
+    </div>
+    <div className="flex items-center gap-1 text-muted-foreground group-hover:text-emerald-deep transition-colors shrink-0">
+      <span className="text-xs">زيارة</span>
+      <ChevronLeft className="size-4" />
+    </div>
+  </div>
+</Link>
+
+       
          
           </aside>
         </div>

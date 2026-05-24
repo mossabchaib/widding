@@ -6,14 +6,14 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_LABEL } from "@/lib/categories";
 import { useCategories, getCategoryLabel } from "@/hooks/use-categories";
-import { AlertCircle, CreditCard, Inbox, LayoutDashboard, Package } from "lucide-react";
+import { AlertCircle, CreditCard, Inbox, LayoutDashboard, Package ,User } from "lucide-react";
 import { DashboardShell, type DashNav } from "@/components/dashboard-shell";
 
 import { Overview } from "./Overview";
 import { ServicesTab } from "./ServicesTab";
 import { RequestsTab } from "./RequestsTab";
 import { SubscriptionTab } from "./SubscriptionTab";
-
+import { ProfileTab } from "./profile";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Provider {
@@ -23,8 +23,8 @@ interface Provider {
   service_type: string;
   is_active: boolean;
   subscription_expires_at: string | null;
+  views: number;
 }
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const NAV: DashNav[] = [
@@ -32,11 +32,12 @@ const NAV: DashNav[] = [
   { key: "services",      label: "خدماتي",    icon: Package },
   { key: "requests",      label: "الطلبات",   icon: Inbox },
   { key: "subscription",  label: "الاشتراك",  icon: CreditCard },
+  { key: "profile",       label: "ملفي",      icon: User },
 ];
 
 // Only the columns the dashboard actually uses — avoids fetching sensitive/unused fields
 const PROVIDER_SELECT =
-  "id, user_id, business_name, service_type, is_active, subscription_expires_at";
+  "id, user_id, business_name, service_type, is_active, subscription_expires_at, views";
 
 // ─── Query function ───────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ async function fetchMyProvider(userId: string): Promise<Provider | null> {
     .select(PROVIDER_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
-
+console.log("Fetched provider data:", data, "Error:", error);
   if (error) throw new Error(error.message);
   return data as Provider | null;
 }
@@ -155,6 +156,7 @@ export function ProviderDashboard() {
       {view === "services"      && <ServicesTab    providerId={provider.id} />}
       {view === "requests"      && <RequestsTab   providerId={provider.id} />}
       {view === "subscription"  && <SubscriptionTab provider={provider} />}
+      {view === "profile"       && <ProfileTab />}
     </DashboardShell>
   );
 }

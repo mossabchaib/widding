@@ -8,12 +8,6 @@ interface AuthShellProps {
   children: ReactNode;
 }
 
-/**
- * Premium auth layout used by /auth/login and /auth/register.
- * - Split-screen on desktop with editorial brand panel
- * - Gradient backdrop + subtle Andalusian motif
- * - RTL-first, fully responsive
- */
 export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellProps) {
   return (
     <div className="relative min-h-[calc(100vh-4rem)] grid lg:grid-cols-[1.1fr_1fr] overflow-hidden">
@@ -36,25 +30,28 @@ export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellPro
           }}
         />
 
-        <Link to="/" className="relative z-10 font-display text-3xl tracking-tight">عرسي</Link>
+        <Link to="/" className="relative z-10 font-display text-3xl tracking-tight">Fêteparfaite</Link>
 
         <div className="relative z-10 max-w-md">
           <p className="text-gold-burnished/90 text-xs uppercase tracking-[0.3em] mb-4">
             ليلة العمر
           </p>
           <h2 className="font-display text-5xl leading-[1.15] mb-5">
-            نظّم عرسك بطمأنينة، من قاعةٍ إلى ضحكة.
-          </h2>
+           تفاصيل تُبهِر … ذكريات تدوم
+              <br />
+             Fêteparfaite, la touche parfaite
+              </h2>
+              
           <p className="text-bone-warm/75 leading-relaxed">
-            منصّة عرسي تجمع لك أرقى مزوّدي خدمات الأعراس عبر 58 ولاية —
-            قاعات، تصوير، تجميل، حلويات و DJ.
+            منصّة Fêteparfaite تجمع لك أرقى مزوّدي خدمات الأعراس عبر 58 ولاية —
+            قاعات، تصوير، تجميل، حلويات .
           </p>
         </div>
 
         <div className="relative z-10 grid grid-cols-3 gap-6 text-center">
           {[
-            { v: "+1.2k", l: "مزوّد" },
-            { v: "58", l: "ولاية" },
+            { v: "+1", l: "مزوّد" },
+            { v: "69", l: "ولاية" },
             { v: "4.8★", l: "متوسط" },
           ].map((s) => (
             <div key={s.l}>
@@ -69,7 +66,7 @@ export function AuthShell({ title, subtitle, altPrompt, children }: AuthShellPro
       <section className="relative grid place-items-center px-5 py-12 sm:px-10 bg-gradient-to-br from-bone-warm via-bone-warm to-secondary">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 text-center">
-            <Link to="/" className="font-display text-3xl text-emerald-deep">عرسي</Link>
+            <Link to="/" className="font-display text-3xl text-emerald-deep">Fêteparfaite</Link>
           </div>
 
           <div className="text-center mb-8">

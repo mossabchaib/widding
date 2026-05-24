@@ -5,3 +5,4 @@ export { RequestsTab } from "./RequestsTab";
 export { SubscriptionTab } from "./SubscriptionTab";
 export { ServiceFormDialog } from "./ServiceFormDialog";
 export { SearchBar } from "./SearchBar";
+export { ProfileTab } from "./profile";

@@ -102,7 +102,7 @@ function RegisterPage() {
   return (
     <AuthShell
       title="إنشاء حساب"
-      subtitle="انضم إلى منصّة عرسي — مجانًا للعملاء، باشتراك ميسّر للمزوّدين"
+      subtitle="انضم إلى منصّة Fêteparfaite — مجانًا للعملاء، باشتراك ميسّر للمزوّدين"
       altPrompt={
         <>
           لديك حساب؟{" "}
