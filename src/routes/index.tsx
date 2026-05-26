@@ -173,11 +173,11 @@ function HomePage() {
 
           <div className="relative max-w-md mx-auto w-full">
             <div className="absolute -inset-6 bg-gradient-to-tr from-gold-burnished/20 to-emerald-deep/10 rounded-[3rem] blur-2xl" />
-            <div className="relative aspect-[4/5] w-full rounded-[2rem] overflow-hidden ring-1 ring-foreground/10 bg-gradient-to-br from-emerald-deep via-emerald-deep/95 to-oxblood-rich grid place-items-center shadow-2xl">
+            <div className="relative aspect-[4/5] w-full rounded-[2rem] overflow-hidden ring-1 ring-foreground/10 bg-emerald-deep grid place-items-center shadow-2xl">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
               <div className="absolute top-6 right-6 size-2 rounded-full bg-gold-burnished animate-pulse" />
               <div className="relative text-center text-bone-warm px-8">
-                <div className="text-[8rem] md:text-[10rem] font-display leading-none mb-2 bg-gradient-to-b from-bone-warm to-gold-burnished bg-clip-text text-transparent">69</div>
+                <div className="text-[8rem] md:text-[10rem] font-display leading-none mb-2 bg-gradient-to-b from-yellow-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(255,215,0,0.45)]t">69</div>
                 <div className="font-display text-2xl tracking-wide">ولاية</div>
                 <div className="mt-3 h-px w-12 bg-gold-burnished/50 mx-auto" />
                 <div className="text-sm mt-3 opacity-80">تغطية كاملة للجزائر</div>

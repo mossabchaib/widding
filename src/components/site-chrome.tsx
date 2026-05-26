@@ -50,9 +50,10 @@ export function SiteHeader() {
     
     {/* Logo */}
 <img
-  src="https://png.pngtree.com/png-vector/20250305/ourmid/pngtree-wedding-couple-silhouette-vector-logo-in-white-background-png-image_15721885.png"
+  // src="https://png.pngtree.com/png-vector/20250305/ourmid/pngtree-wedding-couple-silhouette-vector-logo-in-white-background-png-image_15721885.png"
+  src="../../public/logo.png"
   alt="Fêteparfaite Logo"
-  className="h-20 w-20 object-contain group-hover:scale-105 transition-transform"
+  className="h-15 w-15 object-contain group-hover:scale-105 transition-transform"
 />
 
 <span className="hidden sm:inline text-2xl font-extrabold tracking-tight bg-gradient-to-l from-foreground to-foreground/70 bg-clip-text text-transparent font-display">
