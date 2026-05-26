@@ -51,7 +51,7 @@ export function SiteHeader() {
     {/* Logo */}
 <img
   // src="https://png.pngtree.com/png-vector/20250305/ourmid/pngtree-wedding-couple-silhouette-vector-logo-in-white-background-png-image_15721885.png"
-  src="../../public/logo.png"
+  src="/logo.png"
   alt="Fêteparfaite Logo"
   className="h-15 w-15 object-contain group-hover:scale-105 transition-transform"
 />
