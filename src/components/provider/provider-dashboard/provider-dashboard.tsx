@@ -6,7 +6,7 @@ import { useAuthContext } from "@/hooks/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_LABEL } from "@/lib/categories";
 import { useCategories, getCategoryLabel } from "@/hooks/use-categories";
-import { AlertCircle, CreditCard, Inbox, LayoutDashboard, Package ,User } from "lucide-react";
+import { AlertCircle, CreditCard, Inbox, LayoutDashboard, Package, User } from "lucide-react";
 import { DashboardShell, type DashNav } from "@/components/dashboard-shell";
 
 import { Overview } from "./Overview";
@@ -14,6 +14,7 @@ import { ServicesTab } from "./ServicesTab";
 import { RequestsTab } from "./RequestsTab";
 import { SubscriptionTab } from "./SubscriptionTab";
 import { ProfileTab } from "./profile";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Provider {
@@ -25,21 +26,26 @@ interface Provider {
   subscription_expires_at: string | null;
   views: number;
 }
+
+interface Subscription {
+  status: string;
+  end_date: string | null;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const NAV: DashNav[] = [
-  { key: "overview",      label: "نظرة عامة", icon: LayoutDashboard },
-  { key: "services",      label: "خدماتي",    icon: Package },
-  { key: "requests",      label: "الطلبات",   icon: Inbox },
-  { key: "subscription",  label: "الاشتراك",  icon: CreditCard },
-  { key: "profile",       label: "ملفي",      icon: User },
+  { key: "overview",     label: "نظرة عامة", icon: LayoutDashboard },
+  { key: "services",     label: "خدماتي",    icon: Package },
+  { key: "requests",     label: "الطلبات",   icon: Inbox },
+  { key: "subscription", label: "الاشتراك",  icon: CreditCard },
+  { key: "profile",      label: "ملفي",      icon: User },
 ];
 
-// Only the columns the dashboard actually uses — avoids fetching sensitive/unused fields
 const PROVIDER_SELECT =
   "id, user_id, business_name, service_type, is_active, subscription_expires_at, views";
 
-// ─── Query function ───────────────────────────────────────────────────────────
+// ─── Query functions ──────────────────────────────────────────────────────────
 
 async function fetchMyProvider(userId: string): Promise<Provider | null> {
   const { data, error } = await supabase
@@ -47,9 +53,23 @@ async function fetchMyProvider(userId: string): Promise<Provider | null> {
     .select(PROVIDER_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
-console.log("Fetched provider data:", data, "Error:", error);
+
   if (error) throw new Error(error.message);
   return data as Provider | null;
+}
+
+// ── جديد: جلب آخر اشتراك من جدول subscriptions ──
+async function fetchMySubscription(providerId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("status, end_date")
+    .eq("provider_id", providerId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  console.log("Fetched subscription:", data, error);
+  if (error) throw new Error(error.message);
+  return data as Subscription | null;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -59,7 +79,6 @@ export function ProviderDashboard() {
   const navigate = useNavigate();
   const [view, setView] = useState("overview");
 
-  // Redirect non-providers only after auth has fully resolved
   useEffect(() => {
     if (!authLoading && !isProvider) {
       navigate({ to: "/auth/login" });
@@ -74,14 +93,28 @@ export function ProviderDashboard() {
   } = useQuery<Provider | null, Error>({
     queryKey: ["my-provider", user?.id],
     queryFn: () => fetchMyProvider(user!.id),
-    // Only run when auth is settled and we know the user is a provider
     enabled: !authLoading && isProvider && !!user?.id,
-    staleTime: 5 * 60_000, // provider profile rarely changes — 5 min cache
+    staleTime: 5 * 60_000,
   });
+
+  // ── جديد: query الاشتراك ──
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery<Subscription | null, Error>({
+    queryKey: ["my-subscription", provider?.id],
+    queryFn: () => fetchMySubscription(provider!.id),
+    enabled: !!provider?.id,
+    staleTime: 5 * 60_000,
+  });
+console.log("Subscription data:", subscription, "Loading:", subscriptionLoading);
+  // ── جديد: حساب هل الاشتراك فعّال ──
+  const isSubscriptionActive = useMemo(() => {
+    if (!subscription) return false;
+    if (subscription.status !== "active") return false;
+    if (!subscription.end_date) return false;
+    return new Date(subscription.end_date) > new Date();
+  }, [subscription]);
 
   const { data: categories } = useCategories();
 
-  // Memoize the resolved category label to avoid recalculating on every render
   const serviceTypeLabel = useMemo(
     () => getCategoryLabel(categories, provider?.service_type),
     [categories, provider?.service_type],
@@ -89,8 +122,7 @@ export function ProviderDashboard() {
 
   // ── Guards ────────────────────────────────────────────────────────────────
 
-  // Show spinner while auth OR provider data is in flight
-  const isLoading = authLoading || providerLoading;
+  const isLoading = authLoading || providerLoading || subscriptionLoading;
 
   if (isLoading) {
     return (
@@ -114,7 +146,6 @@ export function ProviderDashboard() {
     );
   }
 
-  // Provider record not found (e.g. user exists but has no provider profile yet)
   if (!provider) return null;
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -129,16 +160,16 @@ export function ProviderDashboard() {
       badge={
         <Badge
           className={
-            provider.is_active
+            isSubscriptionActive
               ? "bg-emerald-deep text-bone-warm"
               : "bg-muted text-muted-foreground"
           }
         >
-          {provider.is_active ? "مفعّل" : "غير مفعّل"}
+          {isSubscriptionActive ? "مفعّل" : "غير مفعّل"}
         </Badge>
       }
     >
-      {!provider.is_active && (
+      {!isSubscriptionActive && (
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-gold-burnished/30 bg-gold-burnished/5 p-4 shadow-sm">
           <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold-burnished/15 text-gold-burnished">
             <AlertCircle className="size-5" />
@@ -152,11 +183,11 @@ export function ProviderDashboard() {
         </div>
       )}
 
-      {view === "overview"      && <Overview      providerId={provider.id} provider={provider} />}
-      {view === "services"      && <ServicesTab    providerId={provider.id} />}
-      {view === "requests"      && <RequestsTab   providerId={provider.id} />}
-      {view === "subscription"  && <SubscriptionTab provider={provider} />}
-      {view === "profile"       && <ProfileTab />}
+      {view === "overview"     && <Overview      providerId={provider.id} provider={provider} />}
+      {view === "services"     && <ServicesTab   providerId={provider.id} />}
+      {view === "requests"     && <RequestsTab   providerId={provider.id} />}
+      {view === "subscription" && <SubscriptionTab provider={provider} />}
+      {view === "profile"      && <ProfileTab />}
     </DashboardShell>
   );
 }

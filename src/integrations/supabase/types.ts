@@ -300,6 +300,38 @@ export type Database = {
           },
         ]
       }
+      provider_contacts: {
+        Row: {
+          id: string
+          provider_id: string
+          type: string
+          value: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          provider_id: string
+          type: string
+          value: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          provider_id?: string
+          type?: string
+          value?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_contacts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           id: string

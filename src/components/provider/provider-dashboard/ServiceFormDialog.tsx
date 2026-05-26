@@ -100,8 +100,7 @@ function validate({ name, category, wilaya, price, slug }: FormState): string | 
   if (!name.trim()) return "اسم الخدمة مطلوب";
   if (!category) return "اختر الفئة أولًا";
   if (!wilaya) return "اختر الولاية";
-  if (!slug.trim()) return "الـ Slug مطلوب";
-  if (!/^[a-z0-9-]+$/.test(slug.trim())) return "الـ Slug يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط";
+  // if (!/^[a-z0-9-]+$/.test(slug.trim())) return "الـ Slug يجب أن يحتوي على أحرف إنجليزية صغيرة وأرقام وشرطات فقط";
   const parsedPrice = Number(price);
   if (price !== "" && (isNaN(parsedPrice) || parsedPrice < 0)) return "السعر غير صالح";
   return null;

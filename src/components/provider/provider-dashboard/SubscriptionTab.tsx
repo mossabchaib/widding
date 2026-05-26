@@ -48,7 +48,7 @@ interface Subscription {
   commerce_doc_url: string | null;
   plan_days: number;
   plan_name: string | null;
-  status: "pending" | "active" | "rejected";
+  status: "pending" | "active" | "expired" ;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
@@ -68,10 +68,6 @@ interface SubscriptionTabProps {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Upload a single file to a Supabase storage bucket and return its path.
- * Throws on error so callers can handle it with try/catch.
- */
 async function uploadFile(userId: string, bucket: string, file: File): Promise<string> {
   const path = `${userId}/${Date.now()}-${file.name}`;
   const { error } = await supabase.storage.from(bucket).upload(path, file);
@@ -79,17 +75,12 @@ async function uploadFile(userId: string, bucket: string, file: File): Promise<s
   return path;
 }
 
-/**
- * Open a signed URL for a storage path in a new tab.
- * Opens the window before the async work to avoid popup-blocker interference.
- */
 async function openSignedUrl(path: string): Promise<void> {
   const newWindow = window.open("", "_blank");
   if (!newWindow) {
     toast.error("يرجى السماح بالنوافذ المنبثقة (Pop-ups)");
     return;
   }
-
   const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 60);
   if (error) {
     newWindow.close();
@@ -104,15 +95,14 @@ async function openSignedUrl(path: string): Promise<void> {
   }
 }
 
-async function fetchSubscriptions(providerId: string): Promise<any[]> {
+async function fetchSubscriptions(providerId: string): Promise<Subscription[]> {
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
     .eq("provider_id", providerId)
     .order("created_at", { ascending: false });
-
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as Subscription[];
 }
 
 // ---------------------------------------------------------------------------
@@ -133,8 +123,19 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
     queryFn: () => fetchSubscriptions(provider.id),
   });
 
+  // ── حساب حالة الاشتراك من جدول subscriptions ──
+  const isSubscriptionActive = useMemo(() => {
+    const latest = subs[0];
+    if (!latest) return false;
+    if (latest.status !== "active") return false;
+    if (!latest.end_date) return false;
+    return new Date(latest.end_date) > new Date();
+  }, [subs]);
+
+  const latestEndDate = subs[0]?.end_date ?? null;
+
   const hasPending = useMemo(() => subs.some((s) => s.status === "pending"), [subs]);
-  const canSubscribe = !provider.is_active && !hasPending;
+  const canSubscribe = !isSubscriptionActive && !hasPending;
 
   const submit = useCallback(async () => {
     if (!selectedPlan) { toast.error("يرجى اختيار باقة أولاً"); return; }
@@ -149,26 +150,16 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
         uploadFile(user.id, "receipts", commerceFile),
       ]);
 
-     type SubscriptionInsert = {
-  provider_id: string;
-  receipt_url: string;
-  commerce_doc_url: string;
-  plan_days: number;
-  plan_name: string;
-  status: "pending" | "active" | "rejected";
-};
+      const insertData: any = {
+        provider_id: provider.id,
+        receipt_url: receiptPath,
+        commerce_doc_url: commercePath,
+        plan_days: selectedPlan.days,
+        plan_name: selectedPlan.name,
+        status: "pending",
+      };
 
-const insertData: any = {
-  provider_id: provider.id,
-  receipt_url: receiptPath,
-  commerce_doc_url: commercePath,
-  plan_days: selectedPlan.days,
-  plan_name: selectedPlan.name,
-  status: "pending",
-};
-
-const { error } = await supabase.from("subscriptions").insert(insertData);
-
+      const { error } = await supabase.from("subscriptions").insert(insertData);
       if (error) throw error;
 
       toast.success("تم الإرسال للمراجعة بنجاح!");
@@ -177,8 +168,7 @@ const { error } = await supabase.from("subscriptions").insert(insertData);
       setSelectedPlan(null);
       qc.invalidateQueries({ queryKey: ["my-subs", provider.id] });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "حدث خطأ أثناء الإرسال";
-      toast.error(message);
+      toast.error(err instanceof Error ? err.message : "حدث خطأ أثناء الإرسال");
     } finally {
       setUploading(false);
     }
@@ -193,12 +183,13 @@ const { error } = await supabase.from("subscriptions").insert(insertData);
     <>
       <PageHeader title="الاشتراك" description="اختر باقتك وأرسل الوثائق المطلوبة" />
 
+      {/* ── Status Card ── */}
       <DataCard className="mb-8 overflow-hidden p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
               className={`grid size-14 place-items-center rounded-2xl ${
-                provider.is_active
+                isSubscriptionActive
                   ? "bg-emerald-deep/10 text-emerald-deep ring-1 ring-emerald-deep/20"
                   : "bg-muted text-muted-foreground"
               }`}
@@ -212,19 +203,16 @@ const { error } = await supabase.from("subscriptions").insert(insertData);
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <Badge
                   className={
-                    provider.is_active
+                    isSubscriptionActive
                       ? "bg-emerald-deep text-bone-warm"
                       : "bg-muted text-muted-foreground"
                   }
                 >
-                  {provider.is_active ? "مفعّل" : "غير مفعّل"}
+                  {isSubscriptionActive ? "مفعّل" : "غير مفعّل"}
                 </Badge>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Calendar className="size-3.5" />
-                  ينتهي:{" "}
-                  {provider.subscription_expires_at
-                    ? formatDate(provider.subscription_expires_at)
-                    : "—"}
+                  ينتهي: {latestEndDate ? formatDate(latestEndDate) : "—"}
                 </span>
               </div>
             </div>
@@ -348,23 +336,24 @@ const { error } = await supabase.from("subscriptions").insert(insertData);
       ) : (
         <div className="mb-8 rounded-xl border border-emerald-deep/20 bg-emerald-deep/5 p-6 text-center shadow-sm">
           <div className="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-emerald-deep/10 text-emerald-deep">
-            {provider.is_active ? (
+            {isSubscriptionActive ? (
               <CheckCircle2 className="size-6" />
             ) : (
               <Clock className="size-6" />
             )}
           </div>
           <h3 className="font-display text-lg font-semibold">
-            {provider.is_active ? "أنت مشترك بالفعل" : "طلب اشتراكك قيد المراجعة"}
+            {isSubscriptionActive ? "أنت مشترك بالفعل" : "طلب اشتراكك قيد المراجعة"}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {provider.is_active
+            {isSubscriptionActive
               ? "يمكنك الاستفادة من جميع ميزات المنصة حتى نهاية فترة اشتراكك."
               : "لقد استلمنا طلبك وهو الآن قيد المراجعة من قبل الإدارة. ستتلقى إشعاراً فور تفعيل حسابك."}
           </p>
         </div>
       )}
 
+      {/* ── History Table ── */}
       <div>
         <div className="mb-4">
           <h3 className="font-display text-xl">سجل الاشتراكات</h3>

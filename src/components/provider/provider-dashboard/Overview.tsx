@@ -35,6 +35,8 @@ interface Review {
 interface Subscription {
   id: string;
   created_at: string;
+  status: string;
+  end_date: string | null;
 }
 
 interface Provider {
@@ -63,7 +65,7 @@ async function fetchProviderOverview(providerId: string): Promise<ProviderData> 
   const [servicesRes, requestsRes, subsRes] = await Promise.all([
     supabase.from("services").select("id, provider_id, category, price").eq("provider_id", providerId),
     supabase.from("requests").select("id, status, created_at, services(price)").eq("provider_id", providerId),
-    supabase.from("subscriptions").select("id, created_at").eq("provider_id", providerId).order("created_at", { ascending: false }),
+    supabase.from("subscriptions").select("id, created_at, status, end_date").eq("provider_id", providerId).order("created_at", { ascending: false }),
   ]);
 
   if (servicesRes.error) throw new Error(servicesRes.error.message);
@@ -100,6 +102,16 @@ export function Overview({ providerId, provider }: OverviewProps) {
   const services = data?.services ?? [];
   const requests = data?.requests ?? [];
   const reviews = data?.reviews ?? [];
+  const subscriptions = data?.subscriptions ?? [];
+
+  // ── جديد: حساب حالة الاشتراك من جدول subscriptions ──
+  const isSubscriptionActive = useMemo(() => {
+    const latest = subscriptions[0];
+    if (!latest) return false;
+    if (latest.status !== "active") return false;
+    if (!latest.end_date) return false;
+    return new Date(latest.end_date) > new Date();
+  }, [subscriptions]);
 
   const avg = useMemo(() => {
     if (!reviews.length) return 0;
@@ -407,11 +419,13 @@ export function Overview({ providerId, provider }: OverviewProps) {
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-widest text-white/40">حالة الاشتراك</p>
               <p className="text-base font-semibold text-white">
-                {provider.is_active ? "اشتراك نشط" : "الاشتراك منتهي"}
+                {isSubscriptionActive ? "اشتراك نشط" : "الاشتراك منتهي"}
               </p>
               <div className="flex items-center gap-1.5 text-xs text-white/50">
                 <Calendar className="h-3.5 w-3.5" />
-                <span>تاريخ الانتهاء: {provider.subscription_expires_at ? formatDate(provider.subscription_expires_at) : "—"}</span>
+                <span>
+                  تاريخ الانتهاء: {subscriptions[0]?.end_date ? formatDate(subscriptions[0].end_date) : "—"}
+                </span>
               </div>
             </div>
           </div>
@@ -421,12 +435,12 @@ export function Overview({ providerId, provider }: OverviewProps) {
               <span className="text-xs text-white/40">الحالة الحالية</span>
               <div
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ring-1 ${
-                  provider.is_active
+                  isSubscriptionActive
                     ? "bg-emerald-400/15 text-emerald-300 ring-emerald-400/30"
                     : "bg-rose-400/15 text-rose-300 ring-rose-400/30"
                 }`}
               >
-                {provider.is_active ? (
+                {isSubscriptionActive ? (
                   <>
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
