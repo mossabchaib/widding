@@ -3,9 +3,9 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  console.log("✅ getRouter called");
+  
   const queryClient = new QueryClient();
-  console.log("✅ QueryClient created");
+  
 
   const router = createRouter({
     routeTree,
@@ -14,6 +14,6 @@ export const getRouter = () => {
     defaultPreloadStaleTime: 0,
   });
 
-  console.log("✅ router created");
+  
   return router;
 };

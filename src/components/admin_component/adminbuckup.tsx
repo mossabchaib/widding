@@ -562,8 +562,8 @@ function UsersAdmin() {
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id,role"),
       ]);
-      console.log("profs:", profs)
-      console.log("roles:", roles)
+      
+      
       const rmap: Record<string, string[]> = {};
       (roles.data ?? []).forEach((r: any) => { rmap[r.user_id] = [...(rmap[r.user_id] ?? []), r.role]; });
       return (profs.data ?? []).map((p: any) => ({ ...p, roles: rmap[p.id] ?? [] }));
@@ -592,7 +592,7 @@ function UsersAdmin() {
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     });
   };
-console.log("filtered:",filtered)
+
   const roleStyle = (r: string) =>
     r === "admin" ? "border-oxblood-rich/30 bg-oxblood-rich/10 text-oxblood-rich"
     : r === "provider" ? "border-emerald-deep/30 bg-emerald-deep/10 text-emerald-deep"

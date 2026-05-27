@@ -223,7 +223,7 @@ export function SiteFooter() {
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Phone className="h-4 w-4" />
                 </span>
-                <span dir="ltr">+213 664 69 97 80</span>
+                <span dir="ltr">+213 666 62 14 53</span>
               </li>
               <li className="flex items-center gap-3">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -272,7 +272,7 @@ export function SiteFooter() {
           <p className="text-xs text-muted-foreground">
             تم تطوير الموقع من طرف{" "}
             <a
-              href="https://mutahni.com"
+              href="https://metheni.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline underline-offset-4 transition-colors"

@@ -67,7 +67,7 @@ async function fetchMySubscription(providerId: string): Promise<Subscription | n
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  console.log("Fetched subscription:", data, error);
+  
   if (error) throw new Error(error.message);
   return data as Subscription | null;
 }
@@ -104,7 +104,7 @@ export function ProviderDashboard() {
     enabled: !!provider?.id,
     staleTime: 5 * 60_000,
   });
-console.log("Subscription data:", subscription, "Loading:", subscriptionLoading);
+
   // ── جديد: حساب هل الاشتراك فعّال ──
   const isSubscriptionActive = useMemo(() => {
     if (!subscription) return false;

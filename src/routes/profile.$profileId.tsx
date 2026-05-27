@@ -126,7 +126,7 @@ function ProviderProfilePage() {
       .select("id")
       .eq("id", profileId)
       .maybeSingle();
-console.log("Fetched provider for contacts:", providerData, providerError);
+
     if (providerError || !providerData) throw new Error("Provider not found");
     const { data, error } = await supabase
       .from("provider_contacts")

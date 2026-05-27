@@ -146,45 +146,12 @@ function Subscriptions() {
 
   const { state: delState, ask: askDel, close: closeDel } = useDeleteConfirm();
 
-  useEffect(() => {
-    void checkExpiredSubscriptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (isError) {
     toast.error("فشل تحميل الاشتراكات");
   }
 
-  async function checkExpiredSubscriptions(): Promise<void> {
-    const today = toDateString(new Date());
-
-    const { data: expired, error } = await supabase
-      .from("subscriptions")
-      .select("id, providers ( id )")
-      .eq("status", "active")
-      .lt("end_date", today);
-
-    if (error) { console.error("Failed to fetch expired subscriptions:", error.message); return; }
-    if (!expired?.length) return;
-
-    await Promise.all(
-      expired.map(async (sub) => {
-        const providerId = resolveProviderId(sub.providers as ProviderForSub | null);
-
-        const [subResult, provResult] = await Promise.all([
-          supabase.from("subscriptions").update({ status: "rejected" }).eq("id", sub.id),
-          providerId
-            ? supabase.from("providers").update({ is_active: false, subscription_expires_at: null }).eq("id", providerId)
-            : Promise.resolve({ error: null }),
-        ]);
-
-        if (subResult.error) console.error(`Failed to expire subscription ${sub.id}:`, subResult.error.message);
-        if (provResult.error) console.error(`Failed to deactivate provider ${providerId}:`, provResult.error.message);
-      })
-    );
-
-    qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
-  }
+ 
 
   async function handleApprove(s: Subscription): Promise<void> {
     const providerId = s.providers?.id;
@@ -213,7 +180,7 @@ function Subscriptions() {
   }
 
   async function handleReject(s: Subscription): Promise<void> {
-    const { error } = await supabase.from("subscriptions").update({ status: "rejected" }).eq("id", s.id);
+    const { error } = await supabase.from("subscriptions").update({ status: "expired" }).eq("id", s.id);
     if (error) { toast.error("حدث خطأ أثناء الرفض"); return; }
     toast.success("تم الرفض");
     qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
@@ -281,7 +248,7 @@ function Subscriptions() {
                 <SelectItem value="all">كل الحالات</SelectItem>
                 <SelectItem value="pending">في الانتظار</SelectItem>
                 <SelectItem value="active">مفعّل</SelectItem>
-                <SelectItem value="rejected">مرفوض</SelectItem>
+                <SelectItem value="expired">مرفوض</SelectItem>
               </SelectContent>
             </Select>
 
@@ -404,8 +371,18 @@ function Subscriptions() {
                         <Input
                           type="number"
                           min={1}
-                          defaultValue={30}
-                          className="h-9 w-16 rounded-lg text-center font-num"
+                         defaultValue={
+                                s.plan_name === "أساسية"
+                                ? 30
+                                : s.plan_name === "بريميوم"
+                                ? 90
+                                : s.plan_name === "نصف سنوي"
+                                ? 180
+                                : s.plan_name === "سنوية"
+                                ? 360
+                                : 30
+                                        }
+ className="h-9 w-16 rounded-lg text-center font-num"
                           onChange={(e) =>
                             setDays((prev) => ({
                               ...prev,
@@ -498,7 +475,7 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">رقم الهاتف</p>
-                <p className="mt-0.5 font-medium font-num" dir="ltr">
+                <p className="mt-0.5 font-medium font-num">
                   {p?.profiles?.phone ?? "—"}
                 </p>
               </div>
@@ -523,14 +500,14 @@ function SubscriptionInfoDialog({ sub, onClose }: SubscriptionInfoDialogProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">السجل التجاري</p>
-                <p className="mt-0.5 font-medium font-num" dir="ltr">
-                  {p?.commerce_register_number ?? "—"}
+                <p className="mt-0.5 font-medium font-num" >
+                  {sub?.commerce_doc_url? "موجود" : "غير موجود"}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">حالة التوثيق</p>
                 <p className="mt-0.5 font-medium">
-                  {p?.verified ? (
+                  {sub?.status ? (
                     <span className="text-emerald-deep">موثق ✓</span>
                   ) : (
                     <span className="text-gold-burnished">غير موثق</span>
