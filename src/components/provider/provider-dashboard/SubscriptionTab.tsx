@@ -218,6 +218,20 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
             </div>
           </div>
         </div>
+         <div className="mt-3 flex flex-wrap gap-4 border-t border-border/50 pt-3">
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        رقم CCP الذي تدفع فيه
+      </p>
+      <p className="font-num text-sm font-bold text-foreground">007999990040155733</p>
+    </div>
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        المفتاح
+      </p>
+      <p className="font-num text-sm font-bold text-foreground">23</p>
+    </div>
+  </div>
       </DataCard>
 
       {canSubscribe ? (
@@ -292,6 +306,20 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
                   <p className="text-xs text-muted-foreground">
                     صورة الشاك أو إيصال التحويل البنكي
                   </p>
+                   <div className="mt-3 flex flex-wrap gap-4 border-t border-border/50 pt-3">
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        رقم CCP الذي تدفع فيه
+      </p>
+      <p className="font-num text-sm font-bold text-foreground">007999990040155733</p>
+    </div>
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        المفتاح
+      </p>
+      <p className="font-num text-sm font-bold text-foreground">23</p>
+    </div>
+  </div>
                   {receiptFile && (
                     <p className="flex items-center gap-1 rounded-md bg-emerald-deep/10 px-2 py-1 text-xs text-emerald-deep">
                       <CheckCircle2 className="size-3.5" /> {receiptFile.name}
@@ -361,7 +389,7 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
         </div>
 
         <DataCard className="overflow-hidden">
-          <Table>
+          <Table  dir="ltr">
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableHead className="font-semibold">الباقة</TableHead>

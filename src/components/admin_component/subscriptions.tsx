@@ -72,12 +72,11 @@ interface Subscription {
 const SUBS_QUERY_KEY = ["admin-subs"] as const;
 
 const PLAN_OPTIONS = [
-  { value: "all", label: "كل الباقات" },
-  { value: "أساسية", label: "أساسية" },
-  { value: "شهرية", label: "شهرية" },
-  { value: "ربع سنوية", label: "ربع سنوية" },
-  { value: "نصف سنوية", label: "نصف سنوية" },
-  { value: "سنوية", label: "سنوية" },
+  { value: "all",       label: "كل الباقات" },
+  { value: "أساسية",   label: "أساسية" },
+  { value: "بريميوم",  label: "بريميوم" },
+  { value: "نصف سنوي", label: "نصف سنوي" },
+  { value: "سنوية",    label: "سنوية" },
 ] as const;
 
 // ─── Query ───────────────────────────────────────────────────────────────────
@@ -180,7 +179,7 @@ function Subscriptions() {
   }
 
   async function handleReject(s: Subscription): Promise<void> {
-    const { error } = await supabase.from("subscriptions").update({ status: "expired" }).eq("id", s.id);
+    const { error } = await supabase.from("subscriptions").update({ status: "rejected" }).eq("id", s.id);
     if (error) { toast.error("حدث خطأ أثناء الرفض"); return; }
     toast.success("تم الرفض");
     qc.invalidateQueries({ queryKey: SUBS_QUERY_KEY });
@@ -248,7 +247,8 @@ function Subscriptions() {
                 <SelectItem value="all">كل الحالات</SelectItem>
                 <SelectItem value="pending">في الانتظار</SelectItem>
                 <SelectItem value="active">مفعّل</SelectItem>
-                <SelectItem value="expired">مرفوض</SelectItem>
+                <SelectItem value="rejected">مرفوض</SelectItem>
+                <SelectItem value="expired">منتهي</SelectItem>
               </SelectContent>
             </Select>
 

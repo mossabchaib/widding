@@ -83,8 +83,8 @@ function LoginPage() {
 
       toast.success("مرحبًا بك مجددًا");
 
-      const roles = await fetchUserRoles(data.user.id);
-      navigate({ to: resolveRedirectPath(roles) });
+      // const roles = await fetchUserRoles(data.user.id);
+ navigate({ to:"/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
     }
