@@ -45,7 +45,6 @@ interface Subscription {
   id: string;
   provider_id: string;
   receipt_url: string | null;
-  commerce_doc_url: string | null;
   plan_days: number;
   plan_name: string | null;
   status: "pending" | "active" | "expired" ;
@@ -115,7 +114,6 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
 
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [commerceFile, setCommerceFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const { data: subs = [] } = useQuery<Subscription[]>({
@@ -140,20 +138,17 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
   const submit = useCallback(async () => {
     if (!selectedPlan) { toast.error("يرجى اختيار باقة أولاً"); return; }
     if (!receiptFile)  { toast.error("يرجى رفع وصل الدفع"); return; }
-    if (!commerceFile) { toast.error("يرجى رفع السجل التجاري"); return; }
     if (!user) return;
 
     setUploading(true);
     try {
-      const [receiptPath, commercePath] = await Promise.all([
+      const [receiptPath] = await Promise.all([
         uploadFile(user.id, "receipts", receiptFile),
-        uploadFile(user.id, "receipts", commerceFile),
       ]);
 
       const insertData: any = {
         provider_id: provider.id,
         receipt_url: receiptPath,
-        commerce_doc_url: commercePath,
         plan_days: selectedPlan.days,
         plan_name: selectedPlan.name,
         status: "pending",
@@ -164,7 +159,6 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
 
       toast.success("تم الإرسال للمراجعة بنجاح!");
       setReceiptFile(null);
-      setCommerceFile(null);
       setSelectedPlan(null);
       qc.invalidateQueries({ queryKey: ["my-subs", provider.id] });
     } catch (err: unknown) {
@@ -172,7 +166,7 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
     } finally {
       setUploading(false);
     }
-  }, [selectedPlan, receiptFile, commerceFile, user, provider.id, qc]);
+  }, [selectedPlan, receiptFile, user, provider.id, qc]);
 
   const handleViewDoc = useCallback((path: string | null) => {
     if (!path) { toast.error("مسار الوثيقة غير موجود"); return; }
@@ -327,33 +321,14 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="block">
-                    السجل التجاري <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(e) => setCommerceFile(e.target.files?.[0] ?? null)}
-                    disabled={uploading}
-                    className="cursor-pointer"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    وثيقة السجل التجاري الخاص بنشاطك
-                  </p>
-                  {commerceFile && (
-                    <p className="flex items-center gap-1 rounded-md bg-emerald-deep/10 px-2 py-1 text-xs text-emerald-deep">
-                      <CheckCircle2 className="size-3.5" /> {commerceFile.name}
-                    </p>
-                  )}
-                </div>
+            
               </div>
 
               <div className="mt-6 flex justify-end border-t border-emerald-deep/10 pt-5">
                 <Button
                   className="bg-emerald-deep text-bone-warm shadow-sm hover:bg-emerald-deep/90"
                   onClick={submit}
-                  disabled={uploading || !receiptFile || !commerceFile}
+                  disabled={uploading || !receiptFile }
                 >
                   {uploading ? "جاري الرفع..." : "إرسال للمراجعة"}
                 </Button>
@@ -436,16 +411,7 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
                           <FileText className="size-4" color="green" />
                         </Button>
                       )}
-                      {s.commerce_doc_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewDoc(s.commerce_doc_url)}
-                          title="السجل التجاري"
-                        >
-                          <FileText className="size-4" color="red" />
-                        </Button>
-                      )}
+                    
                     </div>
                   </TableCell>
                 </TableRow>

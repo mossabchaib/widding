@@ -343,7 +343,7 @@ function Subscriptions() {
                       <Eye className="size-4" />
                     </Button>
 
-                    {s.commerce_doc_url && (
+                    {s.receipt_url && (
                       <>
                         <Button
                           size="sm"
@@ -354,15 +354,7 @@ function Subscriptions() {
                         >
                           <FileText className="size-4 text-emerald-deep" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="size-9 rounded-lg p-0"
-                          onClick={() => viewDocument(s.commerce_doc_url, "receipts")}
-                          title="السجل التجاري"
-                        >
-                          <FileText className="size-4 text-indigo-500" />
-                        </Button>
+                        
                       </>
                     )}
 
