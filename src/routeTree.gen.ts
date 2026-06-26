@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ForProvidersRouteImport } from './routes/for-providers'
@@ -23,6 +24,11 @@ import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AccountRequestsRouteImport } from './routes/account.requests'
 import { Route as AccountFavoritesRouteImport } from './routes/account.favorites'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderRoute = ProviderRouteImport.update({
   id: '/provider',
   path: '/provider',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/for-providers': typeof ForProvidersRoute
   '/how-it-works': typeof HowItWorksRoute
   '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/for-providers': typeof ForProvidersRoute
   '/how-it-works': typeof HowItWorksRoute
   '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/for-providers': typeof ForProvidersRoute
   '/how-it-works': typeof HowItWorksRoute
   '/provider': typeof ProviderRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/requests': typeof AccountRequestsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/for-providers'
     | '/how-it-works'
     | '/provider'
+    | '/reset-password'
     | '/account/favorites'
     | '/account/requests'
     | '/auth/login'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/for-providers'
     | '/how-it-works'
     | '/provider'
+    | '/reset-password'
     | '/account/favorites'
     | '/account/requests'
     | '/auth/login'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/for-providers'
     | '/how-it-works'
     | '/provider'
+    | '/reset-password'
     | '/account/favorites'
     | '/account/requests'
     | '/auth/login'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   ForProvidersRoute: typeof ForProvidersRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ProviderRoute: typeof ProviderRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   AccountFavoritesRoute: typeof AccountFavoritesRoute
   AccountRequestsRoute: typeof AccountRequestsRoute
   AuthLoginRoute: typeof AuthLoginRoute
@@ -201,6 +214,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider': {
       id: '/provider'
       path: '/provider'
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForProvidersRoute: ForProvidersRoute,
   HowItWorksRoute: HowItWorksRoute,
   ProviderRoute: ProviderRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   AccountFavoritesRoute: AccountFavoritesRoute,
   AccountRequestsRoute: AccountRequestsRoute,
   AuthLoginRoute: AuthLoginRoute,

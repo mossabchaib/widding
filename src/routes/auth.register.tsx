@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
-import { phoneToEmail } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { WILAYAS } from "@/lib/wilayas";
 import { useCategories } from "@/hooks/use-categories";
 import { AuthShell } from "@/components/auth-shell";
-import { User, Phone, Lock, MapPin, Briefcase, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, Phone, Lock, MapPin, Briefcase, Eye, EyeOff, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -30,6 +29,7 @@ const PHONE_RE = /^[0-9+\s-]{8,15}$/;
 
 const baseSchema = z.object({
   full_name: z.string().trim().min(2, "الاسم قصير").max(100),
+  email: z.string().trim().email("البريد الإلكتروني غير صالح"),
   phone: z.string().trim().regex(PHONE_RE, "رقم هاتف غير صالح"),
   password: z.string().min(6, "كلمة السر قصيرة (6 أحرف على الأقل)").max(72),
   wilaya: z.string().min(1, "اختر الولاية"),
@@ -53,11 +53,10 @@ type Role = "client" | "provider";
  * Throws a localised error string on failure.
  */
 async function signUpUser(
-  phone: string,
+  email: string,
   password: string,
   metadata: Record<string, string>
 ): Promise<string> {
-  const email = phoneToEmail(phone);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -151,18 +150,18 @@ function ClientForm() {
 
   const form = useForm<ClientFields>({
     resolver: zodResolver(baseSchema),
-    defaultValues: { full_name: "", phone: "", password: "", wilaya: "" },
+    defaultValues: { full_name: "", email: "", phone: "", password: "", wilaya: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      await signUpUser(values.phone, values.password, {
+      await signUpUser(values.email, values.password, {
         full_name: values.full_name,
+        email: values.email,
         phone: values.phone,
         wilaya: values.wilaya,
         role: "client",
       });
-
 
       toast.success("تم إنشاء الحساب بنجاح");
       navigate({ to: "/" });
@@ -177,6 +176,10 @@ function ClientForm() {
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <Field icon={<User className="size-4" />} label="الاسم الكامل" error={errors.full_name?.message}>
         <StyledInput placeholder="محمد بن علي" {...form.register("full_name")} />
+      </Field>
+
+      <Field icon={<Mail className="size-4" />} label="البريد الإلكتروني" error={errors.email?.message}>
+        <StyledInput dir="ltr" inputMode="email" type="email" placeholder="example@email.com" {...form.register("email")} />
       </Field>
 
       <Field icon={<Phone className="size-4" />} label="رقم الهاتف" error={errors.phone?.message}>
@@ -218,13 +221,14 @@ function ProviderForm() {
 
   const form = useForm<ProviderFields>({
     resolver: zodResolver(providerSchema),
-    defaultValues: { full_name: "", phone: "", password: "", wilaya: "", service_type: "" },
+    defaultValues: { full_name: "", email: "", phone: "", password: "", wilaya: "", service_type: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      const userId = await signUpUser(values.phone, values.password, {
+      const userId = await signUpUser(values.email, values.password, {
         full_name: values.full_name,
+        email: values.email,
         phone: values.phone,
         wilaya: values.wilaya,
         role: "provider",
@@ -247,6 +251,10 @@ function ProviderForm() {
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <Field icon={<Briefcase className="size-4" />} label="اسم النشاط" error={errors.full_name?.message}>
         <StyledInput placeholder="قاعة الأندلس" {...form.register("full_name")} />
+      </Field>
+
+      <Field icon={<Mail className="size-4" />} label="البريد الإلكتروني" error={errors.email?.message}>
+        <StyledInput dir="ltr" inputMode="email" type="email" placeholder="example@email.com" {...form.register("email")} />
       </Field>
 
       <Field icon={<Phone className="size-4" />} label="رقم الهاتف" error={errors.phone?.message}>
