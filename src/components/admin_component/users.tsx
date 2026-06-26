@@ -45,14 +45,27 @@ function Usersp() {
 
   const { q, setQ, filtered } = useSearch<any>(rows, (u) => `${u.full_name} ${u.phone} ${u.wilaya}`);
 
-  const del = (id: string) => {
-    askDel("هل أنت متأكد من حذف هذا المستخدم نهائياً؟ سيتم حذف جميع بياناته ولا يمكن استرجاعها.", async () => {
-      await supabase.from("profiles").delete().eq("id", id);
-      toast.success("تم حذف المستخدم بنجاح");
-      qc.invalidateQueries({ queryKey: ["admin-users"] });
-    });
-  };
-
+ const del = (id: string) => {
+  askDel(
+    "هل أنت متأكد من حذف هذا المستخدم نهائياً؟ سيتم حذف جميع بياناته ولا يمكن استرجاعها.",
+    async () => {
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .delete()
+          .eq("id", id);
+        if (error) {
+          throw error;
+        }
+        toast.success("تم حذف المستخدم بنجاح");
+        qc.invalidateQueries({ queryKey: ["admin-users"] });
+      } catch (error: any) {
+        console.error("Delete user error:", error);
+        toast.error(error.message || "حدث خطأ أثناء حذف المستخدم");
+      }
+    }
+  );
+};
   const roleStyle = (r: string) =>
     r === "admin" ? "border-oxblood-rich/30 bg-oxblood-rich/10 text-oxblood-rich"
     : r === "provider" ? "border-emerald-deep/30 bg-emerald-deep/10 text-emerald-deep"
