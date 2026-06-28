@@ -22,7 +22,6 @@ export function useAuth() {
   const extrasLoadedForRef = useRef<string | null>(null);
   const fetchingForRef = useRef<string | null>(null);
 
-  // ✅ بدون getSession داخلها — هذا كان يسبب 429
   const fetchExtras = useCallback(async (uid: string) => {
     if (fetchingForRef.current === uid) return;
     fetchingForRef.current = uid;
@@ -51,6 +50,12 @@ export function useAuth() {
 
       if (event === "TOKEN_REFRESHED") {
         setSession(s);
+        return;
+      }
+
+      // ← هنا الإضافة: تجاهل PASSWORD_RECOVERY ولا تعمل login
+      if (event === "PASSWORD_RECOVERY") {
+        setLoading(false);
         return;
       }
 
