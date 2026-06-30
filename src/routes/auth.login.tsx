@@ -163,7 +163,7 @@ function ForgotPasswordView({ setView }: { setView: (v: "login") => void }) {
  const onSubmit = form.handleSubmit(async (values) => {
   try {
    const res = await fetch(
-  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-and-reset`,
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clever-action`,
   {
     method: "POST",
     headers: {
