@@ -6,16 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { WILAYAS } from "@/lib/wilayas";
 import { AuthShell } from "@/components/auth-shell";
-import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-// ─── Route ─────────────────────────────────────────────────────────────────────
-
 export const Route = createFileRoute("/auth/login")({ component: LoginPage });
 
-// ─── Validation ────────────────────────────────────────────────────────────────
+const PHONE_RE = /^[0-9+\s-]{8,15}$/;
 
 const loginSchema = z.object({
   email: z.string().trim().email("البريد الإلكتروني غير صالح"),
@@ -24,25 +24,24 @@ const loginSchema = z.object({
 
 const forgotSchema = z.object({
   email: z.string().trim().email("البريد الإلكتروني غير صالح"),
+  phone: z.string().trim().regex(PHONE_RE, "رقم هاتف غير صالح"),
+  wilaya: z.string().min(1, "اختر الولاية"),
 });
 
 type LoginFields = z.infer<typeof loginSchema>;
 type ForgotFields = z.infer<typeof forgotSchema>;
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
-
 function LoginPage() {
-  const [view, setView] = useState<"login" | "forgot" | "forgot-sent">("login");
+  const [view, setView] = useState<"login" | "forgot">("login");
 
-  if (view === "forgot" || view === "forgot-sent") {
-    return <ForgotPasswordView view={view} setView={setView} />;
+  if (view === "forgot") {
+    return <ForgotPasswordView setView={setView} />;
   }
 
   return <LoginView setView={setView} />;
 }
 
-// ─── Login view ────────────────────────────────────────────────────────────────
-
+// ✅ LoginView صحيح — signInWithPassword فقط
 function LoginView({ setView }: { setView: (v: "forgot") => void }) {
   const navigate = useNavigate();
   const [showPwd, setShowPwd] = useState(false);
@@ -128,7 +127,6 @@ function LoginView({ setView }: { setView: (v: "forgot") => void }) {
           />
         </FieldGroup>
 
-        {/* Forgot password link */}
         <div className="flex justify-end -mt-2">
           <button
             type="button"
@@ -145,9 +143,7 @@ function LoginView({ setView }: { setView: (v: "forgot") => void }) {
           className="group relative w-full h-12 rounded-xl bg-emerald-deep hover:bg-emerald-deep/90 text-bone-warm font-medium text-base shadow-lg shadow-emerald-deep/20 hover:shadow-xl hover:shadow-emerald-deep/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:hover:translate-y-0"
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="size-4 animate-spin ms-2" /> جاري الدخول...
-            </>
+            <><Loader2 className="size-4 animate-spin ms-2" /> جاري الدخول...</>
           ) : (
             "دخول"
           )}
@@ -157,83 +153,49 @@ function LoginView({ setView }: { setView: (v: "forgot") => void }) {
   );
 }
 
-// ─── Forgot password view ──────────────────────────────────────────────────────
-
-function ForgotPasswordView({
-  view,
-  setView,
-}: {
-  view: "forgot" | "forgot-sent";
-  setView: (v: "login" | "forgot" | "forgot-sent") => void;
-}) {
+// ✅ ForgotPasswordView صحيح — Edge Function ثم resetPasswordForEmail
+function ForgotPasswordView({ setView }: { setView: (v: "login") => void }) {
   const form = useForm<ForgotFields>({
     resolver: zodResolver(forgotSchema),
-    defaultValues: { email: "" },
+    defaultValues: { email: "", phone: "", wilaya: "" },
   });
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+ const onSubmit = form.handleSubmit(async (values) => {
+  try {
+   const res = await fetch(
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-and-reset`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      email: values.email,
+      phone: values.phone,
+      wilaya: values.wilaya,
+    }),
+  }
+);
+    const data = await res.json();
 
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      setView("forgot-sent");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+    if (!res.ok) {
+      toast.error(data.error ?? "البيانات غير صحيحة");
+      return;
     }
-  });
 
+    window.location.href = data.link;
+
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+  }
+});
   const { isSubmitting, errors } = form.formState;
 
-  // ── Sent confirmation screen ──
-  if (view === "forgot-sent") {
-    return (
-      <AuthShell
-        title="تحقق من بريدك"
-        subtitle="أرسلنا لك رابط إعادة تعيين كلمة السر"
-        altPrompt={
-          <button
-            type="button"
-            onClick={() => setView("login")}
-            className="flex items-center gap-1 text-emerald-deep font-medium underline underline-offset-4 decoration-gold-burnished decoration-2"
-          >
-            <ArrowRight className="size-3.5" />
-            العودة لتسجيل الدخول
-          </button>
-        }
-      >
-        <div className="rounded-2xl bg-muted/60 ring-1 ring-foreground/5 p-6 text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-deep/10">
-            <Mail className="size-6 text-emerald-deep" />
-          </div>
-          <p className="text-sm text-foreground/70 leading-relaxed">
-            إذا كان البريد مسجلًا لدينا، ستصلك رسالة تحتوي على رابط لإعادة تعيين كلمة السر.
-            <br />
-            تحقق من مجلد الرسائل غير المرغوب فيها إن لم تجدها.
-            اضغط على الرابط في الرسالة لإكمال عملية إعادة تعيين كلمة السر (reset password).
-          </p>
-          <button
-            type="button"
-            onClick={() => setView("login")}
-            className="mt-2 w-full h-12 rounded-xl bg-emerald-deep hover:bg-emerald-deep/90 text-bone-warm font-medium text-base shadow-lg shadow-emerald-deep/20 hover:shadow-xl hover:shadow-emerald-deep/30 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            العودة لتسجيل الدخول
-          </button>
-        </div>
-      </AuthShell>
-    );
-  }
-
-  // ── Request form ──
   return (
     <AuthShell
       title="نسيت كلمة السر؟"
-      subtitle="أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين"
+      subtitle="أدخل بياناتك للتحقق من هويتك"
       altPrompt={
         <button
           type="button"
@@ -261,25 +223,57 @@ function ForgotPasswordView({
           />
         </FieldGroup>
 
+        <FieldGroup
+          icon={<Phone className="size-4" />}
+          label="رقم الهاتف"
+          error={errors.phone?.message}
+        >
+          <Input
+            dir="ltr"
+            inputMode="tel"
+            placeholder="0555 XX XX XX"
+            className="h-12 ps-11 rounded-xl bg-background/60 border-border/70 focus-visible:ring-2 focus-visible:ring-emerald-deep/40 focus-visible:border-emerald-deep transition"
+            {...form.register("phone")}
+          />
+        </FieldGroup>
+
+        <FieldGroup
+          icon={<MapPin className="size-4" />}
+          label="الولاية"
+          error={errors.wilaya?.message}
+        >
+          <Select
+            value={form.watch("wilaya")}
+            onValueChange={(v) => form.setValue("wilaya", v, { shouldValidate: true })}
+          >
+            <SelectTrigger className="h-12 ps-11 rounded-xl bg-background/60 border-border/70 focus-visible:ring-2 focus-visible:ring-emerald-deep/40 focus-visible:border-emerald-deep transition">
+              <SelectValue placeholder="اختر الولاية" />
+            </SelectTrigger>
+            <SelectContent>
+              {WILAYAS.map((w) => (
+                <SelectItem key={w} value={w}>
+                  {w}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FieldGroup>
+
         <Button
           type="submit"
           disabled={isSubmitting}
           className="group relative w-full h-12 rounded-xl bg-emerald-deep hover:bg-emerald-deep/90 text-bone-warm font-medium text-base shadow-lg shadow-emerald-deep/20 hover:shadow-xl hover:shadow-emerald-deep/30 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-70 disabled:hover:translate-y-0"
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="size-4 animate-spin ms-2" /> جاري الإرسال...
-            </>
+            <><Loader2 className="size-4 animate-spin ms-2" /> جاري التحقق...</>
           ) : (
-            "إرسال رابط الاستعادة"
+            "تأكيد الهوية"
           )}
         </Button>
       </form>
     </AuthShell>
   );
 }
-
-// ─── Shared UI atom ────────────────────────────────────────────────────────────
 
 function FieldGroup({
   label,
@@ -299,7 +293,7 @@ function FieldGroup({
       <Label className="text-xs font-medium text-foreground/70 uppercase tracking-wider">{label}</Label>
       <div className="relative">
         {icon && (
-          <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+          <span className="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-muted-foreground z-10">
             {icon}
           </span>
         )}
