@@ -38,7 +38,7 @@ const NAV: DashNav[] = [
   { key: "overview",     label: "نظرة عامة", icon: LayoutDashboard },
   { key: "services",     label: "خدماتي",    icon: Package },
   { key: "requests",     label: "الطلبات",   icon: Inbox },
-  { key: "subscription", label: "الاشتراك",  icon: CreditCard },
+  // { key: "subscription", label: "الاشتراك",  icon: CreditCard },
   { key: "profile",      label: "ملفي",      icon: User },
 ];
 
@@ -113,6 +113,11 @@ export function ProviderDashboard() {
     return new Date(subscription.end_date) > new Date();
   }, [subscription]);
 
+  const isPlatformActive = useMemo(
+    () => provider?.is_active || isSubscriptionActive,
+    [provider?.is_active, isSubscriptionActive],
+  );
+
   const { data: categories } = useCategories();
 
   const serviceTypeLabel = useMemo(
@@ -160,24 +165,24 @@ export function ProviderDashboard() {
       badge={
         <Badge
           className={
-            isSubscriptionActive
+            isPlatformActive
               ? "bg-emerald-deep text-bone-warm"
               : "bg-muted text-muted-foreground"
           }
         >
-          {isSubscriptionActive ? "مفعّل" : "غير مفعّل"}
+          {isPlatformActive ? "مفعّل" : "غير مفعّل"}
         </Badge>
       }
     >
       {!isSubscriptionActive && (
-        <div className="mb-6 flex items-start gap-3 rounded-xl border border-gold-burnished/30 bg-gold-burnished/5 p-4 shadow-sm">
-          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-gold-burnished/15 text-gold-burnished">
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-deep/20 bg-emerald-deep/5 p-4 shadow-sm">
+          <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-emerald-deep/10 text-emerald-deep">
             <AlertCircle className="size-5" />
           </div>
           <div className="flex-1 pt-0.5">
-            <p className="text-sm font-medium text-foreground">اشتراكك غير مفعّل</p>
+            <p className="text-sm font-medium text-foreground">حسابك مفعل الآن</p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-              ارفع وصل الدفع وانتظر موافقة الإدارة لتظهر خدماتك للعملاء.
+              يمكنك العمل مباشرة بدون دفع، والاشتراك اختياري ويمكنك طلبه لاحقًا إذا رغبت.
             </p>
           </div>
         </div>

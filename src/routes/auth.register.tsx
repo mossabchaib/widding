@@ -76,17 +76,25 @@ async function signUpUser(
 
 /**
  * Creates the provider row in the `providers` table.
- * Requires that a profiles row for userId already exists.
- * The `service_type` column uses a DB enum; we insert the canonical fallback
- * value "hall" here because the real category is selected per-service, not
- * per-provider. The chosen service_type from the registration form is kept in
- * metadata only (passed via signUpUser → handle_new_user trigger).
+ * Requires that a profiles row for userId already exists (created via the
+ * handle_new_user DB trigger on auth.users).
+ *
+ * `serviceType` is the category slug chosen by the user in the registration
+ * form and is written as-is to providers.service_type. Make sure the DB enum
+ * (or column type) for service_type accepts the same set of values as
+ * categories.slug, or this insert will fail.
  */
-async function createProviderRow(userId: string, businessName: string): Promise<void> {
+async function createProviderRow(
+  userId: string,
+  businessName: string,
+  serviceType: string
+): Promise<void> {
   const { error } = await supabase.from("providers").insert({
     user_id: userId,
     business_name: businessName,
-    service_type: "hall", // enum fallback — see comment above
+    service_type: serviceType,
+    is_active: true,
+    subscription_expires_at: null,
   });
 
   if (error) throw new Error(error.message);
@@ -232,11 +240,10 @@ function ProviderForm() {
         phone: values.phone,
         wilaya: values.wilaya,
         role: "provider",
-        // Stored in metadata for reference; not used for DB enum constraint
         service_type: values.service_type,
       });
 
-      await createProviderRow(userId, values.full_name);
+      await createProviderRow(userId, values.full_name, values.service_type);
 
       toast.success("تم تسجيل المزوّد بنجاح");
       navigate({ to: "/provider" });

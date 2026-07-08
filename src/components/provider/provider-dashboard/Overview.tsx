@@ -113,6 +113,11 @@ export function Overview({ providerId, provider }: OverviewProps) {
     return new Date(latest.end_date) > new Date();
   }, [subscriptions]);
 
+  const isPlatformActive = useMemo(
+    () => provider.is_active || isSubscriptionActive,
+    [provider.is_active, isSubscriptionActive],
+  );
+
   const avg = useMemo(() => {
     if (!reviews.length) return 0;
     const sum = reviews.reduce((acc, r) => acc + Number(r.rating ?? 0), 0);
@@ -419,7 +424,7 @@ export function Overview({ providerId, provider }: OverviewProps) {
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-widest text-white/40">حالة الاشتراك</p>
               <p className="text-base font-semibold text-white">
-                {isSubscriptionActive ? "اشتراك نشط" : "الاشتراك منتهي"}
+                {isPlatformActive ? "الحساب مفعل الآن" : "الاشتراك منتهي"}
               </p>
               <div className="flex items-center gap-1.5 text-xs text-white/50">
                 <Calendar className="h-3.5 w-3.5" />
@@ -435,12 +440,12 @@ export function Overview({ providerId, provider }: OverviewProps) {
               <span className="text-xs text-white/40">الحالة الحالية</span>
               <div
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ring-1 ${
-                  isSubscriptionActive
+                  isPlatformActive
                     ? "bg-emerald-400/15 text-emerald-300 ring-emerald-400/30"
                     : "bg-rose-400/15 text-rose-300 ring-rose-400/30"
                 }`}
               >
-                {isSubscriptionActive ? (
+                {isPlatformActive ? (
                   <>
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />

@@ -130,6 +130,11 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
     return new Date(latest.end_date) > new Date();
   }, [subs]);
 
+  const isPlatformActive = useMemo(
+    () => provider.is_active || isSubscriptionActive,
+    [provider.is_active, isSubscriptionActive],
+  );
+
   const latestEndDate = subs[0]?.end_date ?? null;
 
   const hasPending = useMemo(() => subs.some((s) => s.status === "pending"), [subs]);
@@ -197,12 +202,12 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <Badge
                   className={
-                    isSubscriptionActive
+                    isPlatformActive
                       ? "bg-emerald-deep text-bone-warm"
                       : "bg-muted text-muted-foreground"
                   }
                 >
-                  {isSubscriptionActive ? "مفعّل" : "غير مفعّل"}
+                  {isPlatformActive ? "مفعّل" : "غير مفعّل"}
                 </Badge>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Calendar className="size-3.5" />
@@ -346,11 +351,11 @@ function SubscriptionTab({ provider }: SubscriptionTabProps) {
             )}
           </div>
           <h3 className="font-display text-lg font-semibold">
-            {isSubscriptionActive ? "أنت مشترك بالفعل" : "طلب اشتراكك قيد المراجعة"}
+            {isPlatformActive ? "أنت جاهز للعمل الآن" : "طلب اشتراكك قيد المراجعة"}
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            {isSubscriptionActive
-              ? "يمكنك الاستفادة من جميع ميزات المنصة حتى نهاية فترة اشتراكك."
+            {isPlatformActive
+              ? "حسابك مفعل الآن ويمكنك العمل مباشرة. الاشتراك اختياري ومتاح لاحقًا إذا أردت."
               : "لقد استلمنا طلبك وهو الآن قيد المراجعة من قبل الإدارة. ستتلقى إشعاراً فور تفعيل حسابك."}
           </p>
         </div>
